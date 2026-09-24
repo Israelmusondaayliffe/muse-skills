@@ -1,0 +1,25 @@
+{
+  "schema_version": "ai-film-studio/project-record/v1",
+  "id": "project_example_film",
+  "title": "Example Film",
+  "status": "draft",
+  "creative_intent": {
+    "premise": "A clear premise stated as a conflict that can be filmed.",
+    "central_pressure": "What the protagonist must change or lose.",
+    "audience_promise": "What a viewer should feel, understand, or anticipate.",
+    "smallest_test_scene": "A short scene that proves the central production problem."
+  },
+  "format": {
+    "medium": "short narrative film",
+    "target_duration_seconds": 180,
+    "delivery_intent": "internal review only"
+  },
+  "constraints": {
+    "must_preserve": ["approved identities", "approved geography", "record provenance"],
+    "external_action_policy": "approval-required"
+  },
+  "acceptance_criteria": [
+    {"id": "concept-proof", "evidence": "A user-approved test scene with named constraints."}
+  ],
+  "open_decisions": ["Choose the project-specific visual register."]
+}

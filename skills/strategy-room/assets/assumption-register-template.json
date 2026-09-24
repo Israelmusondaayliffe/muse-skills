@@ -1,0 +1,16 @@
+{
+  "decision": "Select the next plugin wave.",
+  "assumptions": [
+    {
+      "id": "A1",
+      "statement": "The selected plugins have distinct user jobs.",
+      "status": "supported",
+      "confidence": "high",
+      "reversibility": "reversible",
+      "owner": "Capability Operator",
+      "test": "Run trigger and boundary checks.",
+      "kill_condition": "Two plugins repeatedly route the same representative request."
+    }
+  ]
+}
+

@@ -1,0 +1,13 @@
+{
+  "skill": "benchmark-runner",
+  "required": ["run_id", "plan_hash", "environment", "metric_name", "results", "aggregates", "failures", "execution_status", "results_complete"],
+  "nonempty_strings": ["run_id", "plan_hash", "environment", "metric_name"],
+  "list_fields": ["results", "aggregates"],
+  "boolean_fields": ["results_complete"],
+  "enums": {"execution_status": ["complete", "partial", "failed"]},
+  "id_lists": ["results", "aggregates"],
+  "item_required": {
+    "results": ["id", "candidate", "passed", "score", "latency_ms", "cost_usd"],
+    "aggregates": ["id", "candidate", "case_count", "pass_rate", "mean_score", "mean_latency_ms", "total_cost_usd"]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "ai-film-studio/geography-lock/v1",
+  "id": "geo_example_arrival",
+  "scene_id": "scene_example_arrival",
+  "status": "draft",
+  "camera_side": "Camera remains on the entrance side of the room.",
+  "axis_rule": "The camera does not cross the line between the entrance and the primary anchor.",
+  "landmarks": [
+    {"id": "entrance", "position": "far wall, frame-left from the locked camera side"},
+    {"id": "worktable", "position": "midground, right of the entrance"}
+  ],
+  "light_logic": "One motivated window source falls from camera-right across the worktable.",
+  "positions": [
+    {"subject_id": "@char_example_lead_neutral", "relative_to": "one step from the worktable", "facing": "toward entrance", "gaze_target": "entrance"}
+  ]
+}

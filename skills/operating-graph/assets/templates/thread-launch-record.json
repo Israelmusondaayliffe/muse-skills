@@ -1,0 +1,27 @@
+{
+  "packetType": "ThreadLaunchRecord",
+  "protocolVersion": 1,
+  "runId": "run-example",
+  "graphVersion": 1,
+  "epoch": 1,
+  "nodeId": "researcher-a",
+  "attempt": 1,
+  "taskPacketPath": "node-runs/researcher-a/attempt-1/task-packet.json",
+  "taskPacketSha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "request": {
+    "tool": "subagent.spawn",
+    "threadMode": "fresh",
+    "taskName": "og_run_example_1a2b3c4d_researcher_a_1",
+    "model": null,
+    "reasoningEffort": null,
+    "requestedAt": "2026-08-04T12:00:00Z",
+    "message": "Execute only the prepared bounded packet, wait for the controller-owned launch record, and write only the declared node outputs."
+  },
+  "response": {
+    "successful": true,
+    "agentId": "agent-example",
+    "canonicalTaskName": "/root/og_researcher_a_1",
+    "respondedAt": "2026-08-04T12:00:01Z",
+    "error": null
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name", "version", "shape", "runtime", "allowed_capabilities", "required_controls", "scaffold_files", "production_adapters"],
+  "properties": {
+    "name": {"type": "string"},
+    "version": {"type": "string"},
+    "shape": {"type": "string"},
+    "runtime": {"type": "string"},
+    "allowed_capabilities": {"type": "array", "items": {"type": "string"}},
+    "required_controls": {"type": "array", "items": {"type": "string"}},
+    "scaffold_files": {"type": "array", "items": {"type": "string"}},
+    "production_adapters": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

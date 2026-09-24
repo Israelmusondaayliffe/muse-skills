@@ -1,0 +1,1 @@
+{"boolean_fields":["send_authorized"],"const_values":{"send_authorized":false},"enums":{"route":["signal-research","icp","narrative","outreach","content","first-customers"]},"nonempty_strings":["offer","commercial_outcome","rationale"],"required":["route","offer","commercial_outcome","rationale","send_authorized"],"skill":"founder-revenue-engine"}

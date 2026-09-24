@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "objective": "The user-visible result this hero must achieve",
+  "references": [
+    {
+      "source": "Named or supplied visual authority",
+      "permission_status": "owned, licensed, supplied-by-user, or reference-only",
+      "evidence_path": "/absolute/path/to/viewable-reference.png"
+    }
+  ],
+  "first_glance": "One exact sentence describing what the first frame must read as",
+  "non_negotiable_traits": [
+    "Trait one",
+    "Trait two",
+    "Trait three"
+  ],
+  "forbidden_failure_modes": [
+    "Failure one",
+    "Failure two",
+    "Failure three"
+  ],
+  "viewports": {
+    "desktop": {"name": "desktop-hero", "width": 1440, "height": 900, "framing": "Intended desktop crop"},
+    "mobile": {"name": "mobile-hero", "width": 390, "height": 844, "framing": "Intended mobile crop"}
+  },
+  "medium": {
+    "selected": "Chosen implementation medium",
+    "rejected": ["Rejected alternative"],
+    "rationale": "Why the selected medium can reach the target",
+    "switch_condition": "Observable condition that forces a different method"
+  },
+  "states": ["default", "extreme"],
+  "source_path": "/absolute/path/to/source-tree-or-file",
+  "hero_spike_path": "/absolute/path/to/representative-hero",
+  "secondary_features_started": false,
+  "functional_gate": "pending",
+  "visual_gate": "pending",
+  "incomplete_wording": "The hero is functionally testable but not visually accepted yet.",
+  "constraint_conflicts": [],
+  "conflicts_resolved": true,
+  "source_hash": "64-character lowercase sha256 or pending"
+}

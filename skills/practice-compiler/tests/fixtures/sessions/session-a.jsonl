@@ -1,0 +1,3 @@
+{"type":"response_item","payload":{"role":"user","content":"No, that is wrong. The command should use --output. My email is owner@example.com"}}
+{"type":"response_item","payload":{"type":"function_call","name":"exec_command","arguments":"{\"cmd\":\"wavespeed profile save --output demo.json\"}"}}
+{"type":"response_item","payload":{"type":"function_call_output","output":"exit_code: 2 unknown flag, token=sk-test-secret"}}

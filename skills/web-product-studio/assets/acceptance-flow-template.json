@@ -1,0 +1,17 @@
+{
+  "flows": [
+    {
+      "id": "F1",
+      "name": "Complete the primary task",
+      "preconditions": ["User is signed in"],
+      "steps": [
+        {
+          "action": "Open the dashboard",
+          "expected": "The dashboard heading and primary action are visible.",
+          "evidence": "Screenshot or browser assertion"
+        }
+      ],
+      "status": "untested"
+    }
+  ]
+}

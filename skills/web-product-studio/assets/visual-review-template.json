@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "contract_path": "/absolute/path/to/validated-visual-contract.json",
+  "state": "hero-spike",
+  "previous_state": "target-locked",
+  "reviewer": {"id": "reviewer-name-or-task-id", "role": "independent visual reviewer", "independent": true},
+  "comparison": {
+    "viewport": "desktop-hero",
+    "reference_paths": ["/absolute/path/to/viewable-reference.png"],
+    "rendered_paths": ["/absolute/path/to/fresh-render.png"]
+  },
+  "visual_score": 0,
+  "differences": [
+    {"severity": "P1", "description": "Observable mismatch"}
+  ],
+  "functional_gate": "passed",
+  "visual_gate": "failed",
+  "secondary_features_started_before_visual_pass": false,
+  "contract_hash": "64-character lowercase sha256",
+  "source_hash": "64-character lowercase sha256",
+  "artifact_hash": "64-character lowercase sha256",
+  "decision": "repair",
+  "incomplete_wording": "The runtime works, but the hero remains visually incomplete because the named mismatch is unresolved.",
+  "control_case": false,
+  "control_limitation": ""
+}

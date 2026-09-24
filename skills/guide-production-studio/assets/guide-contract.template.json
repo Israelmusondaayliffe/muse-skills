@@ -1,0 +1,54 @@
+{
+  "schema_version": "guide-production-studio/guide-contract/v1",
+  "id": "replace-with-stable-id",
+  "title": "Replace with guide title",
+  "audience": {
+    "primary": "Who will use this",
+    "starting_point": "What they probably know before starting",
+    "expert_value": "What an experienced reader can return for"
+  },
+  "reader_job": "The action the reader came to complete",
+  "outcome": "The useful result the guide must enable",
+  "format": "single-page",
+  "visual_requirement": "not-required",
+  "sources": [],
+  "concepts": [],
+  "evidence": [],
+  "examples": [],
+  "visuals": [],
+  "architecture": {
+    "mode": "single-page",
+    "pages": [],
+    "components": []
+  },
+  "boundaries": {
+    "public_allowed": [],
+    "private_excluded": [],
+    "unsupported_forbidden": []
+  },
+  "publication": {
+    "authorized": false,
+    "destination": null
+  },
+  "acceptance": {
+    "human_owner": "Human reviewer",
+    "required_gates": [
+      "purpose",
+      "context",
+      "vocabulary",
+      "action",
+      "evidence",
+      "provenance_privacy",
+      "examples_reuse",
+      "troubleshooting",
+      "structure_visuals",
+      "voice_value"
+    ],
+    "cold_reader_required_before_scale": true,
+    "bulk_scale_allowed": false
+  },
+  "limits": {
+    "max_internal_support_artifacts": 2,
+    "max_repair_waves": 1
+  }
+}

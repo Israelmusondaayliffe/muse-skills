@@ -1,0 +1,915 @@
+{
+  "schemaVersion": "1.0",
+  "graphId": "adaptive-publishing-org",
+  "name": "Adaptive Publishing Organization",
+  "goal": {
+    "statement": "Research, build, evaluate, distribute, and improve a verified publication within fixed authority and budget boundaries.",
+    "deliverables": [
+      {
+        "id": "verified-publication",
+        "artifactType": "publication",
+        "description": "An independently evaluated publication with traceable research."
+      }
+    ],
+    "completionCriteria": [
+      "The publication exists.",
+      "The independent evaluator approves the publication.",
+      "Research evidence is traceable.",
+      "Distribution remains approval-gated.",
+      "Audience feedback can inform a bounded next epoch."
+    ],
+    "authorityNodeId": "human-authority"
+  },
+  "limits": {
+    "maxConcurrentWorkers": 4,
+    "maxNodeRuns": 48,
+    "maxGraphVersions": 12,
+    "maxEpochs": 4,
+    "maxAutoRewrites": 4,
+    "defaultMaxAttempts": 2
+  },
+  "nodes": [
+    {
+      "id": "human-authority",
+      "kind": "authority",
+      "label": "Human Authority",
+      "purpose": "Own the immutable goal, approvals, and hard boundaries.",
+      "enabled": true,
+      "critical": true,
+      "priority": 100,
+      "execution": {
+        "mode": "human",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [],
+      "inputs": [],
+      "outputs": [],
+      "successCriteria": [
+        "Authority and approval boundaries remain explicit."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "graph-controller",
+      "kind": "controller",
+      "label": "Graph Controller",
+      "purpose": "Schedule the publishing organization and own runtime state.",
+      "enabled": true,
+      "critical": true,
+      "priority": 95,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "analysis",
+        "artifact-read",
+        "state-read"
+      ],
+      "inputs": [],
+      "outputs": [],
+      "successCriteria": [
+        "All state changes and rewrites are auditable."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "researcher",
+      "kind": "worker",
+      "label": "Researcher",
+      "purpose": "Research the publication topic and preserve evidence.",
+      "enabled": true,
+      "critical": true,
+      "priority": 85,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "research",
+        "file-read",
+        "artifact-read",
+        "artifact-write"
+      ],
+      "inputs": [
+        {
+          "artifactType": "publishing-memory",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "verified-research",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "Research questions are answered.",
+        "Evidence and uncertainty are recorded."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 6
+      },
+      "localLoop": {
+        "enabled": true,
+        "maxIterations": 3,
+        "sequence": [
+          "attempt",
+          "inspect",
+          "evaluate",
+          "correct"
+        ],
+        "stopCondition": "All research success criteria are satisfied."
+      }
+    },
+    {
+      "id": "article-builder",
+      "kind": "worker",
+      "label": "Article Builder",
+      "purpose": "Build the publication from verified research.",
+      "enabled": true,
+      "critical": true,
+      "priority": 75,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read",
+        "artifact-write"
+      ],
+      "inputs": [
+        {
+          "artifactType": "verified-research",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "publication",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "The publication satisfies the brief.",
+        "Material claims cite evidence."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 7
+      },
+      "localLoop": {
+        "enabled": true,
+        "maxIterations": 3,
+        "sequence": [
+          "attempt",
+          "inspect",
+          "evaluate",
+          "correct"
+        ],
+        "stopCondition": "All builder success criteria are satisfied."
+      }
+    },
+    {
+      "id": "shared-state",
+      "kind": "state",
+      "label": "Shared State",
+      "purpose": "Preserve approved publishing memory across bounded epochs.",
+      "enabled": true,
+      "critical": true,
+      "priority": 65,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read",
+        "artifact-write",
+        "state-read"
+      ],
+      "inputs": [
+        {
+          "artifactType": "publication",
+          "required": false
+        },
+        {
+          "artifactType": "audience-metrics",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "publishing-memory",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "Shared memory records lineage and current evidence."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "independent-evaluator",
+      "kind": "evaluator",
+      "label": "Independent Evaluator",
+      "purpose": "Evaluate the publication independently from its builder.",
+      "enabled": true,
+      "critical": true,
+      "priority": 90,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read",
+        "evaluation",
+        "artifact-write"
+      ],
+      "inputs": [
+        {
+          "artifactType": "publication",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "evaluation-report",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "Every completion criterion is checked.",
+        "The evaluator did not create the publication."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "newsletter-distribution",
+      "kind": "distributor",
+      "label": "Newsletter Distribution",
+      "purpose": "Optionally distribute the approved publication by newsletter.",
+      "enabled": true,
+      "critical": false,
+      "priority": 45,
+      "execution": {
+        "mode": "tool",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read"
+      ],
+      "inputs": [
+        {
+          "artifactType": "publication",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "newsletter-result",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "Distribution uses an explicit authority approval."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "social-distribution",
+      "kind": "distributor",
+      "label": "Social Distribution",
+      "purpose": "Optionally distribute the approved publication to social channels.",
+      "enabled": true,
+      "critical": false,
+      "priority": 40,
+      "execution": {
+        "mode": "tool",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read"
+      ],
+      "inputs": [
+        {
+          "artifactType": "publication",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "social-result",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "Distribution uses an explicit authority approval."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "community-distribution",
+      "kind": "distributor",
+      "label": "Community Distribution",
+      "purpose": "Optionally distribute the approved publication to a community.",
+      "enabled": true,
+      "critical": false,
+      "priority": 35,
+      "execution": {
+        "mode": "tool",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read"
+      ],
+      "inputs": [
+        {
+          "artifactType": "publication",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "community-result",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "Distribution uses an explicit authority approval."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "audience-signal",
+      "kind": "signal",
+      "label": "Audience Signal",
+      "purpose": "Aggregate audience response without controlling authority.",
+      "enabled": true,
+      "critical": false,
+      "priority": 30,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read",
+        "analysis",
+        "artifact-write"
+      ],
+      "inputs": [
+        {
+          "artifactType": "newsletter-result",
+          "required": false
+        },
+        {
+          "artifactType": "social-result",
+          "required": false
+        },
+        {
+          "artifactType": "community-result",
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "audience-metrics",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "Audience signals retain channel provenance."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "authority-to-controller",
+      "source": "human-authority",
+      "target": "graph-controller",
+      "kind": "goal",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [],
+        "artifacts": [],
+        "approvals": []
+      }
+    },
+    {
+      "id": "controller-to-researcher",
+      "source": "graph-controller",
+      "target": "researcher",
+      "kind": "assign",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [],
+        "artifacts": [],
+        "approvals": []
+      }
+    },
+    {
+      "id": "controller-to-shared-state",
+      "source": "graph-controller",
+      "target": "shared-state",
+      "kind": "assign",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [],
+        "artifacts": [],
+        "approvals": []
+      }
+    },
+    {
+      "id": "researcher-to-builder",
+      "source": "researcher",
+      "target": "article-builder",
+      "kind": "write",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "verified-research"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "researcher",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "verified-research"
+        ],
+        "approvals": []
+      }
+    },
+    {
+      "id": "builder-to-shared-state",
+      "source": "article-builder",
+      "target": "shared-state",
+      "kind": "write",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "publication"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "article-builder",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "publication"
+        ],
+        "approvals": []
+      }
+    },
+    {
+      "id": "builder-to-evaluator",
+      "source": "article-builder",
+      "target": "independent-evaluator",
+      "kind": "verify",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "publication"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "article-builder",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "publication"
+        ],
+        "approvals": []
+      }
+    },
+    {
+      "id": "builder-to-newsletter",
+      "source": "article-builder",
+      "target": "newsletter-distribution",
+      "kind": "write",
+      "enabled": true,
+      "required": false,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "publication"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "article-builder",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "publication"
+        ],
+        "approvals": [
+          "approve-newsletter"
+        ]
+      }
+    },
+    {
+      "id": "builder-to-social",
+      "source": "article-builder",
+      "target": "social-distribution",
+      "kind": "write",
+      "enabled": true,
+      "required": false,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "publication"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "article-builder",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "publication"
+        ],
+        "approvals": [
+          "approve-social"
+        ]
+      }
+    },
+    {
+      "id": "builder-to-community",
+      "source": "article-builder",
+      "target": "community-distribution",
+      "kind": "write",
+      "enabled": true,
+      "required": false,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "publication"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "article-builder",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "publication"
+        ],
+        "approvals": [
+          "approve-community"
+        ]
+      }
+    },
+    {
+      "id": "authority-approves-newsletter",
+      "source": "human-authority",
+      "target": "newsletter-distribution",
+      "kind": "approve",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [],
+        "artifacts": [],
+        "approvals": [
+          "approve-newsletter"
+        ]
+      }
+    },
+    {
+      "id": "authority-approves-social",
+      "source": "human-authority",
+      "target": "social-distribution",
+      "kind": "approve",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [],
+        "artifacts": [],
+        "approvals": [
+          "approve-social"
+        ]
+      }
+    },
+    {
+      "id": "authority-approves-community",
+      "source": "human-authority",
+      "target": "community-distribution",
+      "kind": "approve",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [],
+        "artifacts": [],
+        "approvals": [
+          "approve-community"
+        ]
+      }
+    },
+    {
+      "id": "newsletter-to-audience",
+      "source": "newsletter-distribution",
+      "target": "audience-signal",
+      "kind": "measure",
+      "enabled": true,
+      "required": false,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "newsletter-result"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "newsletter-distribution",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "newsletter-result"
+        ],
+        "approvals": []
+      }
+    },
+    {
+      "id": "social-to-audience",
+      "source": "social-distribution",
+      "target": "audience-signal",
+      "kind": "measure",
+      "enabled": true,
+      "required": false,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "social-result"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "social-distribution",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "social-result"
+        ],
+        "approvals": []
+      }
+    },
+    {
+      "id": "community-to-audience",
+      "source": "community-distribution",
+      "target": "audience-signal",
+      "kind": "measure",
+      "enabled": true,
+      "required": false,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "community-result"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "community-distribution",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "community-result"
+        ],
+        "approvals": []
+      }
+    },
+    {
+      "id": "audience-to-shared-state",
+      "source": "audience-signal",
+      "target": "shared-state",
+      "kind": "write",
+      "enabled": true,
+      "required": false,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "audience-metrics"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "audience-signal",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "audience-metrics"
+        ],
+        "approvals": []
+      }
+    },
+    {
+      "id": "shared-state-to-researcher",
+      "source": "shared-state",
+      "target": "researcher",
+      "kind": "learn",
+      "enabled": true,
+      "required": false,
+      "temporal": "next_epoch",
+      "artifactTypes": [
+        "publishing-memory"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "shared-state",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "publishing-memory"
+        ],
+        "approvals": []
+      }
+    }
+  ],
+  "rewritePolicy": {
+    "automaticRiskLevels": [
+      "low"
+    ],
+    "approvalRiskLevels": [
+      "medium",
+      "high"
+    ],
+    "prohibitedMutations": [
+      "change-goal",
+      "weaken-completion-criteria",
+      "change-authority",
+      "expand-permissions",
+      "remove-approvals",
+      "rewrite-history"
+    ],
+    "triggerPolicies": [
+      {
+        "id": "budget-pressure-collapse",
+        "trigger": "budget-consumption-exceeds-progress",
+        "thresholds": [
+          50,
+          75,
+          90
+        ],
+        "pattern": "collapse_fanout",
+        "riskLevel": "low",
+        "approvalRequired": false,
+        "targets": [
+          "newsletter-distribution",
+          "social-distribution",
+          "community-distribution"
+        ],
+        "primitiveOperations": [
+          "disable_edge",
+          "disable_node"
+        ],
+        "reason": "Collapse redundant optional distribution fan-out before hard limits are reached."
+      },
+      {
+        "id": "repeated-failure-reviewer",
+        "trigger": "same-node-fails-twice",
+        "failureCount": 2,
+        "pattern": "add_reviewer",
+        "riskLevel": "low",
+        "approvalRequired": false,
+        "targets": [
+          "researcher",
+          "article-builder"
+        ],
+        "primitiveOperations": [
+          "add_node",
+          "add_edge"
+        ],
+        "reason": "Add an independent internal reviewer after repeated node failure."
+      }
+    ]
+  },
+  "metadata": {
+    "createdBy": "operating-graph",
+    "createdAt": "2026-07-18T12:00:00Z"
+  }
+}

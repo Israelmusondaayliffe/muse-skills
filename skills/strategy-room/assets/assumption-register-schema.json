@@ -1,0 +1,43 @@
+{
+  "skill": "strategy-room",
+  "required": [
+    "decision",
+    "assumptions"
+  ],
+  "nonempty_strings": [
+    "decision"
+  ],
+  "list_fields": [
+    "assumptions"
+  ],
+  "id_lists": [
+    "assumptions"
+  ],
+  "item_required": {
+    "assumptions": [
+      "id",
+      "statement",
+      "status",
+      "confidence",
+      "reversibility",
+      "owner",
+      "test",
+      "kill_condition"
+    ]
+  },
+  "item_enums": {
+    "assumptions.status": [
+      "untested",
+      "supported",
+      "weakened",
+      "falsified",
+      "expired"
+    ],
+    "assumptions.reversibility": [
+      "reversible",
+      "partly-reversible",
+      "irreversible"
+    ]
+  }
+}
+

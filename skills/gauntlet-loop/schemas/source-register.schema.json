@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gauntlet source register",
+  "type": "object",
+  "required": ["sources"],
+  "properties": {
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "source_type", "evidence_class", "used_by"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "title": {"type": "string", "minLength": 1},
+          "source_type": {"enum": ["primary", "secondary", "expert_commentary", "user_material", "calculation"]},
+          "evidence_class": {"enum": ["observed_fact", "sourced_fact", "inference", "assumption", "recommendation"]},
+          "used_by": {"type": "array"}
+        }
+      }
+    }
+  }
+}

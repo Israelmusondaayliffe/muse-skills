@@ -1,0 +1,26 @@
+{
+  "skill": "benchmark-runner",
+  "artifact": "execution-blocked-handoff",
+  "required": [
+    "handoff_status",
+    "plan_hash",
+    "backend_requirement",
+    "missing_credentials_or_tools",
+    "case_count",
+    "safety_stops",
+    "rerun_command",
+    "named_owner",
+    "execution_complete",
+    "measured_results_complete",
+    "model_selection_complete",
+    "winner"
+  ],
+  "nonempty_strings": ["plan_hash", "backend_requirement"],
+  "list_fields": ["missing_credentials_or_tools", "safety_stops"],
+  "boolean_fields": [
+    "execution_complete",
+    "measured_results_complete",
+    "model_selection_complete"
+  ],
+  "enums": {"handoff_status": ["execution-blocked"]}
+}

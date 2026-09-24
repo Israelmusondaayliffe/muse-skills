@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "generated_at": null,
+  "new_terminal_runs": 0,
+  "total_terminal_runs": 0,
+  "metrics": {
+    "human_acceptance_rate": null,
+    "cost_per_accepted_result": null,
+    "exhausted_runs": 0
+  },
+  "groups": []
+}

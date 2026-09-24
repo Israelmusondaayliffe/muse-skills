@@ -1,0 +1,67 @@
+{
+  "packetType": "NodeTaskPacket",
+  "protocolVersion": 1,
+  "runId": "run-example",
+  "graphId": "example-graph",
+  "graphVersion": 1,
+  "epoch": 1,
+  "nodeId": "researcher-a",
+  "attempt": 1,
+  "task": {
+    "kind": "worker",
+    "objective": "Research one bounded independent angle.",
+    "dependencies": [
+      "planner"
+    ]
+  },
+  "requiredInputs": [],
+  "successCriteria": [
+    "The finding is supported by inspectable evidence."
+  ],
+  "expectedOutputs": [
+    {
+      "artifactType": "research-finding",
+      "required": true
+    }
+  ],
+  "execution": {
+    "mode": "subagent",
+    "skill": null,
+    "modelHint": null
+  },
+  "authorization": {
+    "maySpawnWorkers": false,
+    "mayApprove": false,
+    "mayIntegrate": false,
+    "mayUpdateControllerState": false,
+    "mayAnswerUser": false,
+    "mayIssueTerminalVerdict": false
+  },
+  "scope": {
+    "allowedWriteRoots": [
+      "/absolute/run/node-runs/researcher-a/attempt-1/worker",
+      "/absolute/run/artifacts/researcher-a"
+    ],
+    "returnPacketPath": "/absolute/run/node-runs/researcher-a/attempt-1/worker/return-packet.json",
+    "enforcement": {
+      "mode": "controller-validated-authority",
+      "hostFilesystemSandbox": false,
+      "tamperDetection": [
+        "dispatch-receipt",
+        "launch-receipt",
+        "declared-write-validation"
+      ]
+    }
+  },
+  "context": {
+    "delivery": "bounded_packet_only",
+    "includeParentTranscript": false,
+    "includeHiddenReasoning": false,
+    "referencePaths": []
+  },
+  "limits": {
+    "maxAttempts": 2,
+    "workUnits": 2,
+    "localLoopIterations": 1
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "verifier_role": "",
+  "verdict": "unable_to_verify",
+  "dimensions_checked": [],
+  "criteria_checked": [
+    {
+      "criterion": "",
+      "result": "unable_to_verify",
+      "evidence": []
+    }
+  ],
+  "findings": [],
+  "uncertainties": [],
+  "residual_risks": [],
+  "confidence": "low",
+  "verifier_isolation": "fresh_no_inherited_turns"
+}

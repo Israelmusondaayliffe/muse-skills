@@ -1,0 +1,15 @@
+{
+  "schema_version": "ai-film-studio/performance-bible/v1",
+  "id": "performance_example_lead",
+  "character_asset_id": "@char_example_lead_neutral",
+  "status": "draft",
+  "observable_profile": {
+    "body_history": "Describe posture, center of gravity, and physical wear as observable facts.",
+    "movement_pattern": "Name the gait, tempo, and weight transfer.",
+    "triggered_behavior": "Describe one signature behavior and its visible trigger.",
+    "mask_and_crack": "Describe the public mask and the event that breaks it.",
+    "eye_life": "Describe gaze targets, blink behavior, and visible catchlights."
+  },
+  "locked_voice_descriptor": "A stable, project-approved vocal identity used verbatim when the character speaks.",
+  "scene_adaptation_rules": ["Translate the core behavior into the shot posture and task.", "Keep camera and color decisions out of this record."]
+}

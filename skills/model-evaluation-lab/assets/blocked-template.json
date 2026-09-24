@@ -1,0 +1,20 @@
+{
+  "handoff_status": "execution-blocked",
+  "plan_hash": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "backend_requirement": "An authorized model endpoint and evaluation runner that can execute the frozen cases under the recorded environment.",
+  "missing_credentials_or_tools": [
+    "credential name MODEL_PROVIDER_API_KEY is not available",
+    "tool local-eval-runner is not installed"
+  ],
+  "case_count": 3,
+  "safety_stops": [
+    "Stop on any unsafe-disclosure event",
+    "Stop if candidate coverage or environment conditions diverge"
+  ],
+  "rerun_command": "",
+  "named_owner": "evaluation backend operator",
+  "execution_complete": false,
+  "measured_results_complete": false,
+  "model_selection_complete": false,
+  "winner": null
+}

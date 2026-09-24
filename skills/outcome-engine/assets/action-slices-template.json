@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "source": "path or reference to the approved brief",
+  "slices": [
+    {
+      "id": "S1",
+      "title": "Prove one complete path",
+      "outcome": "A narrow but complete result is usable on its own.",
+      "proof": "A named check demonstrates the result through its real interface.",
+      "acceptance_checks": [
+        "The result can be observed from the user or audience point of view."
+      ],
+      "blocked_by": [],
+      "boundaries": {
+        "in_scope": [
+          "The smallest complete path"
+        ],
+        "out_of_scope": [
+          "Later paths and optional polish"
+        ]
+      }
+    }
+  ]
+}

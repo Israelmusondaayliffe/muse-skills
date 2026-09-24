@@ -1,0 +1,7 @@
+# Color exploration and palette libraries
+
+Use a supplied palette or reference first. Otherwise choose color for the subject, mood, medium and legibility. Explore freely; a palette library such as a Sanzo Wada combination set is a rich optional source, not the default for every image or a required brand dependency.
+
+When a palette library is requested, use the exact supplied combination, or select a suitable one from the source the user or project names. Obtain its palette data and reference image from that source; do not invent URLs, identifiers, or a publisher-owned default. Verify the palette data before naming colors or numbers. Keep names, values, relationships and source together. Assign visual roles such as dominant field, supporting material and small accent. For a generation request, attach the matching reference image if the surface permits; URLs alone may not be read. If the source is inaccessible, use exact supplied palette information or say the source could not be checked. Do not invent a palette identifier.
+
+In NL, name the colors and their roles. JSON can use `palette_contract` with `combination`, `colors`, `reference_image`, `authority` and relevant `forbidden_hues`. System prompts can carry a shared `<palette_contract>`. Hold the palette across a set only when continuity calls for it; if color exploration is requested, vary it deliberately. Judge rendered relationships rather than promising exact pixel color from a text prompt.

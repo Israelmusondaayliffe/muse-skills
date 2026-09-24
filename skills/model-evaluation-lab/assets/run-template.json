@@ -1,0 +1,19 @@
+{
+  "run_id": "support-routing-v1",
+  "plan_hash": "sha256:example-plan-hash",
+  "environment": "Fixed prompt, temperature, no-tool state, and ticket payload schema",
+  "metric_name": "reference-normalized routing score",
+  "results": [
+    {"id": "baseline-success-01", "candidate": "baseline", "passed": true, "score": 0.88, "latency_ms": 720.0, "cost_usd": 0.0031},
+    {"id": "baseline-boundary-01", "candidate": "baseline", "passed": true, "score": 0.74, "latency_ms": 760.0, "cost_usd": 0.0033},
+    {"id": "candidate-success-01", "candidate": "candidate", "passed": true, "score": 0.93, "latency_ms": 810.0, "cost_usd": 0.0037},
+    {"id": "candidate-boundary-01", "candidate": "candidate", "passed": true, "score": 0.79, "latency_ms": 845.0, "cost_usd": 0.0039}
+  ],
+  "aggregates": [
+    {"id": "baseline", "candidate": "baseline", "case_count": 2, "pass_rate": 1.0, "mean_score": 0.81, "mean_latency_ms": 740.0, "total_cost_usd": 0.0064},
+    {"id": "candidate", "candidate": "candidate", "case_count": 2, "pass_rate": 1.0, "mean_score": 0.86, "mean_latency_ms": 827.5, "total_cost_usd": 0.0076}
+  ],
+  "failures": [],
+  "execution_status": "complete",
+  "results_complete": true
+}

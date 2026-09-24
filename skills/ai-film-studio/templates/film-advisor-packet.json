@@ -1,0 +1,11 @@
+{
+  "schema_version": "ai-film-studio/film-advisor-packet/v1",
+  "packet_id": "film_packet_example_001",
+  "activation": {"mode": "explicit", "invocation": "film-advisor"},
+  "route": "shots",
+  "project_root": "/project/example-film",
+  "production_contract": {"status": "approved", "film_brief_id": "brief_example_film", "film_brief_sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "requested_actions": [
+    {"type": "plan", "target": "shot_example_arrival_001", "approval": {"status": "not_granted", "id": "", "action_type": "plan", "target": "shot_example_arrival_001", "evidence": {}}}
+  ]
+}

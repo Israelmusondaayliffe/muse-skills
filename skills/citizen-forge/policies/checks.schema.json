@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["check_id", "severity", "status", "evidence", "explanation", "repair", "ai_may_repair", "human_decision_required"],
+  "properties": {
+    "check_id": {"type": "string", "pattern": "^CF-[A-D][0-9]{2}$"},
+    "severity": {"enum": ["low", "medium", "high", "critical"]},
+    "status": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_APPLICABLE", "UNAVAILABLE"]},
+    "evidence": {"type": "array", "items": {"type": "string"}},
+    "explanation": {"type": "string"},
+    "repair": {"type": "string"},
+    "ai_may_repair": {"type": "boolean"},
+    "human_decision_required": {"type": "boolean"}
+  },
+  "additionalProperties": false
+}

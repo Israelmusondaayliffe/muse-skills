@@ -1,0 +1,13 @@
+{
+  "workstream_id": "",
+  "round": 1,
+  "verdict": "unable_to_evaluate",
+  "quality_dimensions": {},
+  "largest_gap": null,
+  "evidence": [""],
+  "criteria_checked": [""],
+  "recommended_next_change": "",
+  "uncertainties": [],
+  "confidence": "low",
+  "critic_isolation": "fresh_no_inherited_turns"
+}

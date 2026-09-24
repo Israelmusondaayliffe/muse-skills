@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "target": "",
+  "limits": {
+    "max_iterations": 3,
+    "max_minutes": 30,
+    "max_tokens": null
+  },
+  "trigger_cases": [],
+  "functional_cases": [],
+  "rubric": []
+}

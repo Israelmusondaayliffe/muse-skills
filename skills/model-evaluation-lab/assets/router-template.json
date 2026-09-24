@@ -1,0 +1,11 @@
+{
+  "request_summary": "Compare two model configurations for English support-ticket routing and recommend the deployment default.",
+  "workflow_mode": "full-workflow",
+  "current_state": "new-question",
+  "selected_skill": "model-evaluation-plan",
+  "routing_reason": "The deployment decision is named, but no frozen cases, metrics, budget, or stopping rules exist yet.",
+  "required_artifacts": ["deployment decision", "baseline configuration", "candidate configurations", "representative case sources"],
+  "missing_input": "A validated frozen evaluation plan is not present.",
+  "next_action": "Create and validate the model evaluation plan, then return to the router with fresh artifact state.",
+  "handoff_ready": true
+}

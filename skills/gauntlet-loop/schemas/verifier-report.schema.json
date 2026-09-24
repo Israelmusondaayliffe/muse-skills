@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gauntlet verifier report",
+  "type": "object",
+  "required": ["verifier_role", "verdict", "criteria_checked", "findings", "verifier_isolation"],
+  "properties": {
+    "verifier_role": {"type": "string", "minLength": 1},
+    "verdict": {"enum": ["pass", "fail", "unable_to_verify"]},
+    "criteria_checked": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["criterion", "result", "evidence"],
+        "properties": {
+          "criterion": {"type": "string", "minLength": 1},
+          "result": {"enum": ["pass", "fail", "unable_to_verify"]},
+          "evidence": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "findings": {"type": "array"},
+    "verifier_isolation": {"const": "fresh_no_inherited_turns"}
+  },
+  "additionalProperties": true
+}

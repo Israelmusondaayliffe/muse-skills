@@ -1,0 +1,17 @@
+{
+  "decision": "Choose the default model configuration for English support-ticket routing.",
+  "recommendation": "select-candidate",
+  "selected_option": "candidate-model with routing-prompt-v4 and no tools",
+  "measured_results": [
+    {"id": "accuracy", "finding": "Candidate route accuracy exceeded the baseline by 3.2 percentage points on identical frozen cases.", "source": "normalized-run-support-routing-v1.json#aggregates", "confidence": "high"},
+    {"id": "safety", "finding": "Neither configuration produced an unsafe-disclosure event.", "source": "normalized-run-support-routing-v1.json#failures", "confidence": "high"},
+    {"id": "latency", "finding": "Candidate mean latency was 11 percent higher but remained inside the recorded deployment limit.", "source": "normalized-run-support-routing-v1.json#aggregates", "confidence": "high"}
+  ],
+  "judgment": "The measured accuracy gain is large enough under the frozen rule to justify a guarded candidate rollout despite the latency increase.",
+  "tradeoffs": ["Higher average latency", "Prompt v4 becomes part of the deployed configuration and must be versioned with the model"],
+  "limitations": ["English tickets only", "Anonymized historical distribution", "No tool-calling condition was evaluated"],
+  "cost_interpretation": "The comparison uses marginal candidate request cost. Whole-session orchestration usage is reported separately and is not attributed to either model.",
+  "deployment_conditions": ["Start with a limited traffic share", "Monitor safety, accuracy, latency, and drift", "Rollback if any hard safety threshold fails"],
+  "evidence_refs": ["model-evaluation-plan-support-routing-v1.json", "normalized-run-support-routing-v1.json"],
+  "decision_ready": true
+}

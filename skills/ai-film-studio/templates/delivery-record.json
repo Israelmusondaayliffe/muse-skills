@@ -1,0 +1,9 @@
+{
+  "schema_version": "ai-film-studio/delivery-record/v1",
+  "id": "delivery_example_internal_review",
+  "project_id": "project_example_film",
+  "status": "draft",
+  "source_records": ["shot_example_arrival_001", "iteration_example_arrival_001"],
+  "acceptance_criteria": ["Review the cut against named story, continuity, and sound conditions."],
+  "external_delivery": {"required": false, "approval_id": ""}
+}

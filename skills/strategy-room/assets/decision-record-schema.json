@@ -1,0 +1,43 @@
+{
+  "skill": "strategy-room",
+  "required": [
+    "decision",
+    "recommendation",
+    "options",
+    "evidence",
+    "risks",
+    "conditions",
+    "confidence",
+    "handoff"
+  ],
+  "nonempty_strings": [
+    "decision",
+    "recommendation",
+    "handoff"
+  ],
+  "list_fields": [
+    "options",
+    "evidence",
+    "risks",
+    "conditions"
+  ],
+  "id_lists": [
+    "options"
+  ],
+  "item_required": {
+    "options": [
+      "id",
+      "name",
+      "case_for",
+      "case_against"
+    ]
+  },
+  "enums": {
+    "confidence": [
+      "low",
+      "medium",
+      "high"
+    ]
+  }
+}
+

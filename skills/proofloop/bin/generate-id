@@ -1,0 +1,3 @@
+#!/usr/bin/env python3
+from proofloop_cli import main
+raise SystemExit(main("generate-id"))

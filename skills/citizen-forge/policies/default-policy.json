@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "minimum_confidence": 0.85,
+  "max_auto_score": 6,
+  "max_source_lines": 800,
+  "max_source_bytes": 100000,
+  "max_inline_data_bytes": 1024,
+  "inactive_days": 90,
+  "required_controls": [
+    "CF-A01", "CF-A02", "CF-A03", "CF-A04", "CF-A05", "CF-A06", "CF-A07", "CF-A08",
+    "CF-B09", "CF-B10", "CF-B11", "CF-B12", "CF-B13", "CF-B14", "CF-B15", "CF-B16", "CF-B17", "CF-B18", "CF-B19", "CF-B20", "CF-B21", "CF-B22",
+    "CF-C23", "CF-C24", "CF-C25", "CF-C26", "CF-C27", "CF-C28", "CF-C29", "CF-C30", "CF-C31", "CF-C32", "CF-C33",
+    "CF-D34", "CF-D35"
+  ],
+  "unavailable_is_pass": false,
+  "self_approval_for_elevated_release": false
+}

@@ -1,0 +1,12 @@
+{
+  "system": "Agent or workflow name",
+  "findings": [
+    {
+      "id": "A1",
+      "control": "stops",
+      "severity": "blocker",
+      "evidence": "No blocked stop condition is defined.",
+      "remedy": "Define the repeated-failure threshold and escalation."
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{"type": "session_meta", "payload": {"id": "muse-session-1", "thread_source": "user", "timestamp": "2026-09-20T10:00:00Z"}}
+{"type": "user_message", "payload": {"content": "No, that is wrong. The command should use --output."}, "timestamp": "2026-09-20T10:01:00Z"}
+{"type": "response_item", "payload": {"type": "function_call", "name": "muse.exec", "arguments": "{\"command\": \"wavespeed profile save --output demo.json\"}"}, "timestamp": "2026-09-20T10:02:00Z"}
+{"type": "response_item", "payload": {"type": "function_call_output", "output": "exit_code: 2 unknown flag"}, "timestamp": "2026-09-20T10:03:00Z"}

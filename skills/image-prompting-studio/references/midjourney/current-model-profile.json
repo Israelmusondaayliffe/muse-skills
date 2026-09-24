@@ -1,0 +1,281 @@
+{
+  "schema_version": "1.0.0",
+  "provider": "Midjourney",
+  "checked_on": "2026-08-16",
+  "freshness_days": 45,
+  "verification_policy": "Preserved source profile, checked 2026-08-16. Use shared model-profiles.md and the selected live model for current work. This snapshot does not override observed Draft support or authorize a mode change.",
+  "default_model": {
+    "name": "V8.2",
+    "version_value": "8.2",
+    "is_platform_default": true,
+    "released_as_default": "2026-07-24",
+    "version_parameter_policy": "Omit for normal current-default use. Add --v 8.2 only when the user names V8.2, requests reproducibility, or asks to pin the verified current model."
+  },
+  "prompt_surface": {
+    "parameters_at_end": true,
+    "parameter_punctuation": false,
+    "short_direct_prompts_preferred": true
+  },
+  "capabilities": {
+    "image_prompts": true,
+    "image_weight": true,
+    "style_references": true,
+    "style_reference_codes": true,
+    "style_weight": true,
+    "personalization": true,
+    "moodboards": true,
+    "raw": true,
+    "stylize": true,
+    "chaos": true,
+    "weird": true,
+    "experimental": true,
+    "tile": true,
+    "seed": true,
+    "sd": true,
+    "hd": true,
+    "character_reference": false,
+    "omni_reference": false,
+    "multi_prompting": false,
+    "quality_parameter": false,
+    "niji": false,
+    "draft": false,
+    "turbo": false
+  },
+  "limits": {
+    "aspect_ratio_sd_max": "14:1",
+    "aspect_ratio_hd_max": "4:1",
+    "hd_size_px": 2048,
+    "stylize": {
+      "min": 0,
+      "max": 1000,
+      "default": 100
+    },
+    "chaos": {
+      "min": 0,
+      "max": 100,
+      "default": 0
+    },
+    "weird": {
+      "min": 0,
+      "max": 3000,
+      "default": 0
+    },
+    "style_weight": {
+      "min": 0,
+      "max": 1000,
+      "default": 100
+    },
+    "image_weight": {
+      "min": 0,
+      "max": 3,
+      "default": 1
+    }
+  },
+  "parameters": {
+    "supported": [
+      {
+        "name": "version",
+        "aliases": [
+          "--v",
+          "--version"
+        ]
+      },
+      {
+        "name": "aspect_ratio",
+        "aliases": [
+          "--ar",
+          "--aspect"
+        ]
+      },
+      {
+        "name": "chaos",
+        "aliases": [
+          "--c",
+          "--chaos"
+        ]
+      },
+      {
+        "name": "no",
+        "aliases": [
+          "--no"
+        ]
+      },
+      {
+        "name": "personalization",
+        "aliases": [
+          "--p",
+          "--profile"
+        ]
+      },
+      {
+        "name": "seed",
+        "aliases": [
+          "--seed"
+        ]
+      },
+      {
+        "name": "raw",
+        "aliases": [
+          "--raw"
+        ]
+      },
+      {
+        "name": "stylize",
+        "aliases": [
+          "--s",
+          "--stylize"
+        ]
+      },
+      {
+        "name": "style_reference",
+        "aliases": [
+          "--sref"
+        ]
+      },
+      {
+        "name": "style_weight",
+        "aliases": [
+          "--sw"
+        ]
+      },
+      {
+        "name": "image_weight",
+        "aliases": [
+          "--iw"
+        ]
+      },
+      {
+        "name": "tile",
+        "aliases": [
+          "--tile"
+        ]
+      },
+      {
+        "name": "weird",
+        "aliases": [
+          "--w",
+          "--weird"
+        ]
+      },
+      {
+        "name": "experimental",
+        "aliases": [
+          "--exp"
+        ]
+      },
+      {
+        "name": "standard_definition",
+        "aliases": [
+          "--sd"
+        ]
+      },
+      {
+        "name": "high_definition",
+        "aliases": [
+          "--hd"
+        ]
+      }
+    ],
+    "documented_controls_not_added_automatically": [
+      {
+        "name": "repeat",
+        "aliases": [
+          "--r",
+          "--repeat"
+        ]
+      },
+      {
+        "name": "fast",
+        "aliases": [
+          "--fast"
+        ]
+      },
+      {
+        "name": "relax",
+        "aliases": [
+          "--relax"
+        ]
+      },
+      {
+        "name": "public",
+        "aliases": [
+          "--public"
+        ]
+      },
+      {
+        "name": "stealth",
+        "aliases": [
+          "--stealth"
+        ]
+      }
+    ],
+    "unsupported": [
+      {
+        "name": "quality",
+        "aliases": [
+          "--q",
+          "--quality"
+        ]
+      },
+      {
+        "name": "character_reference",
+        "aliases": [
+          "--cref"
+        ]
+      },
+      {
+        "name": "character_weight",
+        "aliases": [
+          "--cw"
+        ]
+      },
+      {
+        "name": "omni_reference",
+        "aliases": [
+          "--oref"
+        ]
+      },
+      {
+        "name": "omni_weight",
+        "aliases": [
+          "--ow"
+        ]
+      },
+      {
+        "name": "niji",
+        "aliases": [
+          "--niji"
+        ]
+      },
+      {
+        "name": "draft",
+        "aliases": [
+          "--draft"
+        ]
+      },
+      {
+        "name": "turbo",
+        "aliases": [
+          "--turbo"
+        ]
+      }
+    ]
+  },
+  "dependencies": [
+    "Use --sw only with --sref.",
+    "Use --iw only when an Image Prompt URL appears before the text prompt.",
+    "Do not combine --sw or style-reference-version controls with Moodboards.",
+    "Use --hd only with aspect ratios no wider or taller than 4:1.",
+    "Do not use multi-prompt separators with V8.2."
+  ],
+  "sources": [
+    "https://docs.midjourney.com/hc/en-us/articles/32199405667853-Version",
+    "https://docs.midjourney.com/hc/en-us/articles/32859204029709-Parameter-List",
+    "https://docs.midjourney.com/hc/en-us/articles/32023408776205-Prompt-Basics",
+    "https://docs.midjourney.com/hc/en-us/articles/32040250122381-Image-Prompts",
+    "https://docs.midjourney.com/hc/en-us/articles/32180011136653-Style-Reference",
+    "https://docs.midjourney.com/hc/en-us/articles/32433330574221-Personalization"
+  ],
+  "status": "historical_snapshot",
+  "authoritative_for_current_runtime": false
+}

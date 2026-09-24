@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","additionalProperties":true,"properties":{"assumptions":{"type":"array"},"decisions":{"type":"array"},"exclusions":{"type":"array"},"schema_version":{"const":1},"scope":{"type":"object"},"user":{"type":"object"}},"required":["schema_version","user","scope","decisions"],"title":"Harness profile","type":"object"}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gauntlet project state",
+  "type": "object",
+  "required": ["schema_version", "project_name", "state", "plan_version", "program_version", "history"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "project_name": {"type": "string", "minLength": 1},
+    "state": {
+      "enum": [
+        "not_initialized", "intake", "grilling", "plan_proposed", "plan_approved",
+        "gauntlet_compiled", "executing", "integrating", "ready_for_verification",
+        "verifying", "verified", "verified_with_caveats", "failed_verification",
+        "unable_to_verify", "waiting_for_user", "blocked", "paused", "stopped"
+      ]
+    },
+    "plan_version": {"type": "integer", "minimum": 0},
+    "program_version": {"type": "integer", "minimum": 0},
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "previous_state",
+          "new_state",
+          "timestamp",
+          "actor",
+          "reason",
+          "related_artifacts",
+          "required_next_action"
+        ]
+      }
+    }
+  },
+  "additionalProperties": true
+}

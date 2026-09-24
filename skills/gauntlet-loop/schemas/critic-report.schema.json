@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gauntlet critic report",
+  "type": "object",
+  "required": ["workstream_id", "round", "verdict", "largest_gap", "evidence", "criteria_checked", "critic_isolation"],
+  "properties": {
+    "workstream_id": {"type": "string", "minLength": 1},
+    "round": {"type": "integer", "minimum": 1},
+    "verdict": {"enum": ["bar_wins", "artifact_wins", "tie", "unable_to_evaluate"]},
+    "largest_gap": {"type": ["string", "null"]},
+    "evidence": {"type": "array", "minItems": 1},
+    "criteria_checked": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "critic_isolation": {"const": "fresh_no_inherited_turns"}
+  },
+  "additionalProperties": true
+}

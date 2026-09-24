@@ -1,0 +1,339 @@
+{
+  "schemaVersion": "1.0",
+  "graphId": "research-build-review",
+  "name": "Research Build Review",
+  "goal": {
+    "statement": "Produce a verified report grounded in traceable research.",
+    "deliverables": [
+      {
+        "id": "final-report",
+        "artifactType": "final-report",
+        "description": "A verified report with traceable evidence."
+      }
+    ],
+    "completionCriteria": [
+      "The final report exists.",
+      "The independent evaluator approves the final report.",
+      "Every material claim has traceable evidence."
+    ],
+    "authorityNodeId": "human-authority"
+  },
+  "limits": {
+    "maxConcurrentWorkers": 3,
+    "maxNodeRuns": 24,
+    "maxGraphVersions": 10,
+    "maxEpochs": 3,
+    "maxAutoRewrites": 3,
+    "defaultMaxAttempts": 2
+  },
+  "nodes": [
+    {
+      "id": "human-authority",
+      "kind": "authority",
+      "label": "Human Authority",
+      "purpose": "Own the goal and approve bounded changes.",
+      "enabled": true,
+      "critical": true,
+      "priority": 100,
+      "execution": {
+        "mode": "human",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [],
+      "inputs": [],
+      "outputs": [],
+      "successCriteria": [
+        "Goal and approval boundaries remain explicit."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "graph-controller",
+      "kind": "controller",
+      "label": "Graph Controller",
+      "purpose": "Coordinate the graph as the sole runtime writer.",
+      "enabled": true,
+      "critical": true,
+      "priority": 90,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "analysis",
+        "artifact-read",
+        "state-read"
+      ],
+      "inputs": [],
+      "outputs": [],
+      "successCriteria": [
+        "Scheduling and state changes remain auditable."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "researcher",
+      "kind": "worker",
+      "label": "Researcher",
+      "purpose": "Gather verified evidence for the report.",
+      "enabled": true,
+      "critical": true,
+      "priority": 80,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "research",
+        "file-read",
+        "artifact-write"
+      ],
+      "inputs": [],
+      "outputs": [
+        {
+          "artifactType": "verified-research",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "Required questions are answered.",
+        "Evidence and uncertainty are recorded."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 5
+      },
+      "localLoop": {
+        "enabled": true,
+        "maxIterations": 3,
+        "sequence": [
+          "attempt",
+          "inspect",
+          "evaluate",
+          "correct"
+        ],
+        "stopCondition": "All research success criteria are satisfied."
+      }
+    },
+    {
+      "id": "builder",
+      "kind": "worker",
+      "label": "Builder",
+      "purpose": "Build the report from verified research.",
+      "enabled": true,
+      "critical": true,
+      "priority": 70,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read",
+        "artifact-write"
+      ],
+      "inputs": [
+        {
+          "artifactType": "verified-research",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "final-report",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "The report addresses the goal.",
+        "Material claims cite registered evidence."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 5
+      },
+      "localLoop": {
+        "enabled": true,
+        "maxIterations": 3,
+        "sequence": [
+          "attempt",
+          "inspect",
+          "evaluate",
+          "correct"
+        ],
+        "stopCondition": "All builder success criteria are satisfied."
+      }
+    },
+    {
+      "id": "independent-evaluator",
+      "kind": "evaluator",
+      "label": "Independent Evaluator",
+      "purpose": "Review the final report independently.",
+      "enabled": true,
+      "critical": true,
+      "priority": 85,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read",
+        "evaluation",
+        "artifact-write"
+      ],
+      "inputs": [
+        {
+          "artifactType": "final-report",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "evaluation-report",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "Every completion criterion is checked.",
+        "The verdict is evidence-backed."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "authority-to-controller",
+      "source": "human-authority",
+      "target": "graph-controller",
+      "kind": "goal",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [],
+        "artifacts": [],
+        "approvals": []
+      }
+    },
+    {
+      "id": "controller-to-researcher",
+      "source": "graph-controller",
+      "target": "researcher",
+      "kind": "assign",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [],
+        "artifacts": [],
+        "approvals": []
+      }
+    },
+    {
+      "id": "researcher-to-builder",
+      "source": "researcher",
+      "target": "builder",
+      "kind": "write",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "verified-research"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "researcher",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "verified-research"
+        ],
+        "approvals": []
+      }
+    },
+    {
+      "id": "builder-to-evaluator",
+      "source": "builder",
+      "target": "independent-evaluator",
+      "kind": "verify",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "final-report"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "builder",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "final-report"
+        ],
+        "approvals": []
+      }
+    }
+  ],
+  "rewritePolicy": {
+    "automaticRiskLevels": [
+      "low"
+    ],
+    "approvalRiskLevels": [
+      "medium",
+      "high"
+    ],
+    "prohibitedMutations": [
+      "change-goal",
+      "weaken-completion-criteria",
+      "change-authority",
+      "expand-permissions",
+      "remove-approvals",
+      "rewrite-history"
+    ]
+  },
+  "metadata": {
+    "createdBy": "operating-graph",
+    "createdAt": "2026-07-18T12:00:00Z"
+  }
+}

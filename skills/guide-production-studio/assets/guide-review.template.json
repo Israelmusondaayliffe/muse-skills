@@ -1,0 +1,33 @@
+{
+  "schema_version": "guide-production-studio/guide-review/v1",
+  "guide_contract_id": "replace-with-contract-id",
+  "producer_id": "replace-with-producer-id",
+  "reviewer_id": "replace-with-independent-reviewer-id",
+  "status": "blocked",
+  "gates": [
+    {"id": "purpose", "passed": false, "evidence": ""},
+    {"id": "context", "passed": false, "evidence": ""},
+    {"id": "vocabulary", "passed": false, "evidence": ""},
+    {"id": "action", "passed": false, "evidence": ""},
+    {"id": "evidence", "passed": false, "evidence": ""},
+    {"id": "provenance_privacy", "passed": false, "evidence": ""},
+    {"id": "examples_reuse", "passed": false, "evidence": ""},
+    {"id": "troubleshooting", "passed": false, "evidence": ""},
+    {"id": "structure_visuals", "passed": false, "evidence": ""},
+    {"id": "voice_value", "passed": false, "evidence": ""}
+  ],
+  "critical_failures": [],
+  "first_confusion_point": null,
+  "cold_reader": {
+    "observed": false,
+    "completed_first_action": false,
+    "evidence": null
+  },
+  "human_approval": {
+    "owner": "Human reviewer",
+    "confirmed": false,
+    "approved_at": null,
+    "evidence": null
+  },
+  "next_action": "Resolve the blocking evidence before human review."
+}

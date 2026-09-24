@@ -1,0 +1,198 @@
+{
+  "schemaVersion": "1.0",
+  "graphId": "adaptive-diamond",
+  "name": "Adaptive Fresh-Thread Diamond",
+  "goal": {
+    "statement": "Produce a checked recommendation from independent evidence lanes.",
+    "deliverables": [
+      {
+        "id": "recommendation",
+        "artifactType": "recommendation",
+        "description": "A recommendation grounded in independently checked evidence."
+      }
+    ],
+    "completionCriteria": [
+      "The recommendation is supported by both specialist lanes.",
+      "A skeptic and final evaluator have inspected the work.",
+      "A human records the decision before consequential action."
+    ],
+    "authorityNodeId": "human-authority"
+  },
+  "limits": {
+    "maxConcurrentWorkers": 2,
+    "maxNodeRuns": 24,
+    "maxGraphVersions": 6,
+    "maxEpochs": 2,
+    "maxAutoRewrites": 2,
+    "defaultMaxAttempts": 2
+  },
+  "nodes": [
+    {
+      "id": "human-authority",
+      "kind": "authority",
+      "label": "Human Authority",
+      "purpose": "Own the goal, boundaries, approvals, and final decision.",
+      "enabled": true,
+      "critical": true,
+      "priority": 100,
+      "execution": {"mode": "human", "skill": null, "modelHint": null},
+      "capabilities": [],
+      "inputs": [],
+      "outputs": [],
+      "successCriteria": ["The human authority boundary remains explicit."],
+      "budget": {"maxAttempts": 2, "workUnits": 1},
+      "localLoop": {"enabled": false, "maxIterations": 1, "sequence": [], "stopCondition": "Authority is recorded."}
+    },
+    {
+      "id": "graph-controller",
+      "kind": "controller",
+      "label": "Graph Controller",
+      "purpose": "Own scheduling, state, packet ingestion, integration, and the terminal verdict.",
+      "enabled": true,
+      "critical": true,
+      "priority": 95,
+      "execution": {"mode": "inline", "skill": null, "modelHint": null},
+      "capabilities": ["analysis", "artifact-read", "state-read"],
+      "inputs": [],
+      "outputs": [],
+      "successCriteria": ["Every runtime mutation is event-backed."],
+      "budget": {"maxAttempts": 2, "workUnits": 2},
+      "localLoop": {"enabled": false, "maxIterations": 1, "sequence": [], "stopCondition": "The run is controlled."}
+    },
+    {
+      "id": "planner",
+      "kind": "worker",
+      "label": "Planner",
+      "purpose": "Define two independent evidence lanes and their shared decision question.",
+      "enabled": true,
+      "critical": true,
+      "priority": 90,
+      "execution": {"mode": "inline", "skill": null, "modelHint": null},
+      "capabilities": ["analysis", "artifact-write"],
+      "inputs": [],
+      "outputs": [{"artifactType": "research-plan", "required": true}],
+      "successCriteria": ["The research lanes are independent and decision-relevant."],
+      "budget": {"maxAttempts": 2, "workUnits": 2},
+      "localLoop": {"enabled": false, "maxIterations": 1, "sequence": [], "stopCondition": "The research plan is complete."}
+    },
+    {
+      "id": "specialist-a",
+      "kind": "worker",
+      "label": "Specialist A",
+      "purpose": "Investigate the first independent evidence lane.",
+      "enabled": true,
+      "critical": true,
+      "priority": 80,
+      "execution": {"mode": "subagent", "skill": null, "modelHint": null},
+      "capabilities": ["artifact-read", "artifact-write", "research"],
+      "inputs": [{"artifactType": "research-plan", "required": true}],
+      "outputs": [{"artifactType": "finding-a", "required": true}],
+      "successCriteria": ["Finding A is specific and evidence-backed."],
+      "budget": {"maxAttempts": 2, "workUnits": 2},
+      "localLoop": {"enabled": false, "maxIterations": 1, "sequence": [], "stopCondition": "Finding A is complete."}
+    },
+    {
+      "id": "specialist-b",
+      "kind": "worker",
+      "label": "Specialist B",
+      "purpose": "Investigate the second independent evidence lane.",
+      "enabled": true,
+      "critical": true,
+      "priority": 80,
+      "execution": {"mode": "subagent", "skill": null, "modelHint": null},
+      "capabilities": ["artifact-read", "artifact-write", "research"],
+      "inputs": [{"artifactType": "research-plan", "required": true}],
+      "outputs": [{"artifactType": "finding-b", "required": true}],
+      "successCriteria": ["Finding B is specific and evidence-backed."],
+      "budget": {"maxAttempts": 2, "workUnits": 2},
+      "localLoop": {"enabled": false, "maxIterations": 1, "sequence": [], "stopCondition": "Finding B is complete."}
+    },
+    {
+      "id": "skeptic",
+      "kind": "evaluator",
+      "label": "Skeptic",
+      "purpose": "Challenge unsupported, stale, duplicated, or decision-irrelevant findings.",
+      "enabled": true,
+      "critical": true,
+      "priority": 75,
+      "execution": {"mode": "subagent", "skill": null, "modelHint": null},
+      "capabilities": ["artifact-read", "artifact-write", "evaluation"],
+      "inputs": [
+        {"artifactType": "finding-a", "required": true},
+        {"artifactType": "finding-b", "required": true}
+      ],
+      "outputs": [{"artifactType": "checked-evidence", "required": true}],
+      "successCriteria": ["Every surviving claim is tied to inspectable evidence."],
+      "budget": {"maxAttempts": 2, "workUnits": 2},
+      "localLoop": {"enabled": false, "maxIterations": 1, "sequence": [], "stopCondition": "The evidence check is complete."}
+    },
+    {
+      "id": "synthesizer",
+      "kind": "worker",
+      "label": "Synthesizer",
+      "purpose": "Merge only the surviving evidence into a bounded recommendation.",
+      "enabled": true,
+      "critical": true,
+      "priority": 70,
+      "execution": {"mode": "subagent", "skill": null, "modelHint": null},
+      "capabilities": ["analysis", "artifact-read", "artifact-write"],
+      "inputs": [{"artifactType": "checked-evidence", "required": true}],
+      "outputs": [{"artifactType": "recommendation", "required": true}],
+      "successCriteria": ["The recommendation includes a decision, rationale, next test, and change-my-mind evidence."],
+      "budget": {"maxAttempts": 2, "workUnits": 2},
+      "localLoop": {"enabled": false, "maxIterations": 1, "sequence": [], "stopCondition": "The recommendation is complete."}
+    },
+    {
+      "id": "final-evaluator",
+      "kind": "evaluator",
+      "label": "Final Evaluator",
+      "purpose": "Independently evaluate the final recommendation against the completion criteria.",
+      "enabled": true,
+      "critical": true,
+      "priority": 65,
+      "execution": {"mode": "subagent", "skill": null, "modelHint": null},
+      "capabilities": ["artifact-read", "artifact-write", "evaluation"],
+      "inputs": [{"artifactType": "recommendation", "required": true}],
+      "outputs": [{"artifactType": "final-evaluation", "required": true}],
+      "successCriteria": ["The recommendation is independently checked against every completion criterion."],
+      "budget": {"maxAttempts": 2, "workUnits": 2},
+      "localLoop": {"enabled": false, "maxIterations": 1, "sequence": [], "stopCondition": "The final evaluation is complete."}
+    },
+    {
+      "id": "human-decision",
+      "kind": "worker",
+      "label": "Human Decision Gate",
+      "purpose": "Record the human decision before any consequential action.",
+      "enabled": true,
+      "critical": true,
+      "priority": 60,
+      "execution": {"mode": "human", "skill": null, "modelHint": null},
+      "capabilities": ["artifact-read", "artifact-write"],
+      "inputs": [{"artifactType": "final-evaluation", "required": true}],
+      "outputs": [{"artifactType": "decision-record", "required": true}],
+      "successCriteria": ["The human records approve, revise, pause, or stop with rationale."],
+      "budget": {"maxAttempts": 2, "workUnits": 1},
+      "localLoop": {"enabled": false, "maxIterations": 1, "sequence": [], "stopCondition": "The human decision is recorded."}
+    }
+  ],
+  "edges": [
+    {"id": "authority-controller", "source": "human-authority", "target": "graph-controller", "kind": "goal", "enabled": true, "required": true, "temporal": "same_epoch", "artifactTypes": [], "activation": {"mode": "all", "nodeStates": [], "artifacts": [], "approvals": []}},
+    {"id": "controller-planner", "source": "graph-controller", "target": "planner", "kind": "assign", "enabled": true, "required": true, "temporal": "same_epoch", "artifactTypes": [], "activation": {"mode": "all", "nodeStates": [], "artifacts": [], "approvals": []}},
+    {"id": "planner-specialist-a", "source": "planner", "target": "specialist-a", "kind": "assign", "enabled": true, "required": true, "temporal": "same_epoch", "artifactTypes": ["research-plan"], "activation": {"mode": "all", "nodeStates": [], "artifacts": ["research-plan"], "approvals": []}},
+    {"id": "planner-specialist-b", "source": "planner", "target": "specialist-b", "kind": "assign", "enabled": true, "required": true, "temporal": "same_epoch", "artifactTypes": ["research-plan"], "activation": {"mode": "all", "nodeStates": [], "artifacts": ["research-plan"], "approvals": []}},
+    {"id": "specialist-a-skeptic", "source": "specialist-a", "target": "skeptic", "kind": "verify", "enabled": true, "required": true, "temporal": "same_epoch", "artifactTypes": ["finding-a"], "activation": {"mode": "all", "nodeStates": [], "artifacts": ["finding-a"], "approvals": []}},
+    {"id": "specialist-b-skeptic", "source": "specialist-b", "target": "skeptic", "kind": "verify", "enabled": true, "required": true, "temporal": "same_epoch", "artifactTypes": ["finding-b"], "activation": {"mode": "all", "nodeStates": [], "artifacts": ["finding-b"], "approvals": []}},
+    {"id": "skeptic-synthesizer", "source": "skeptic", "target": "synthesizer", "kind": "write", "enabled": true, "required": true, "temporal": "same_epoch", "artifactTypes": ["checked-evidence"], "activation": {"mode": "all", "nodeStates": [], "artifacts": ["checked-evidence"], "approvals": []}},
+    {"id": "synthesizer-final-evaluator", "source": "synthesizer", "target": "final-evaluator", "kind": "verify", "enabled": true, "required": true, "temporal": "same_epoch", "artifactTypes": ["recommendation"], "activation": {"mode": "all", "nodeStates": [], "artifacts": ["recommendation"], "approvals": []}},
+    {"id": "final-evaluator-human-decision", "source": "final-evaluator", "target": "human-decision", "kind": "assign", "enabled": true, "required": true, "temporal": "same_epoch", "artifactTypes": ["final-evaluation"], "activation": {"mode": "all", "nodeStates": [], "artifacts": ["final-evaluation"], "approvals": []}}
+  ],
+  "rewritePolicy": {
+    "automaticRiskLevels": ["low"],
+    "approvalRiskLevels": ["medium", "high"],
+    "prohibitedMutations": ["change-goal", "weaken-completion-criteria", "change-authority", "expand-permissions", "remove-approvals", "rewrite-history"]
+  },
+  "metadata": {
+    "createdBy": "operating-graph",
+    "createdAt": "2026-08-04T12:00:00Z"
+  }
+}

@@ -1,0 +1,261 @@
+{
+  "schemaVersion": "1.0",
+  "graphId": "minimal-operating-graph",
+  "name": "Minimal Operating Graph",
+  "goal": {
+    "statement": "Produce a verified deliverable.",
+    "deliverables": [
+      {
+        "id": "final-deliverable",
+        "artifactType": "deliverable",
+        "description": "A verified deliverable."
+      }
+    ],
+    "completionCriteria": [
+      "The deliverable exists.",
+      "The evaluator independently verifies the deliverable."
+    ],
+    "authorityNodeId": "human-authority"
+  },
+  "limits": {
+    "maxConcurrentWorkers": 2,
+    "maxNodeRuns": 12,
+    "maxGraphVersions": 6,
+    "maxEpochs": 2,
+    "maxAutoRewrites": 2,
+    "defaultMaxAttempts": 2
+  },
+  "nodes": [
+    {
+      "id": "human-authority",
+      "kind": "authority",
+      "label": "Human Authority",
+      "purpose": "Own the immutable goal and approvals.",
+      "enabled": true,
+      "critical": true,
+      "priority": 100,
+      "execution": {
+        "mode": "human",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [],
+      "inputs": [],
+      "outputs": [],
+      "successCriteria": [
+        "Authority boundaries remain explicit."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "graph-controller",
+      "kind": "controller",
+      "label": "Graph Controller",
+      "purpose": "Schedule nodes and own all runtime records.",
+      "enabled": true,
+      "critical": true,
+      "priority": 90,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "analysis",
+        "state-read",
+        "artifact-read"
+      ],
+      "inputs": [],
+      "outputs": [],
+      "successCriteria": [
+        "Runtime changes are event-backed."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    },
+    {
+      "id": "builder",
+      "kind": "worker",
+      "label": "Builder",
+      "purpose": "Create the required deliverable.",
+      "enabled": true,
+      "critical": true,
+      "priority": 70,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read",
+        "artifact-write"
+      ],
+      "inputs": [],
+      "outputs": [
+        {
+          "artifactType": "deliverable",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "The deliverable is complete."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": true,
+        "maxIterations": 2,
+        "sequence": [
+          "attempt",
+          "inspect",
+          "evaluate",
+          "correct"
+        ],
+        "stopCondition": "All builder success criteria are satisfied."
+      }
+    },
+    {
+      "id": "independent-evaluator",
+      "kind": "evaluator",
+      "label": "Independent Evaluator",
+      "purpose": "Evaluate the deliverable independently.",
+      "enabled": true,
+      "critical": true,
+      "priority": 80,
+      "execution": {
+        "mode": "inline",
+        "skill": null,
+        "modelHint": null
+      },
+      "capabilities": [
+        "artifact-read",
+        "evaluation",
+        "artifact-write"
+      ],
+      "inputs": [
+        {
+          "artifactType": "deliverable",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "artifactType": "evaluation-report",
+          "required": true
+        }
+      ],
+      "successCriteria": [
+        "The deliverable is independently evaluated."
+      ],
+      "budget": {
+        "maxAttempts": 2,
+        "workUnits": 2
+      },
+      "localLoop": {
+        "enabled": false,
+        "maxIterations": 1,
+        "sequence": [],
+        "stopCondition": "Required work is complete."
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "authority-to-controller",
+      "source": "human-authority",
+      "target": "graph-controller",
+      "kind": "goal",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [],
+        "artifacts": [],
+        "approvals": []
+      }
+    },
+    {
+      "id": "controller-to-builder",
+      "source": "graph-controller",
+      "target": "builder",
+      "kind": "assign",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [],
+        "artifacts": [],
+        "approvals": []
+      }
+    },
+    {
+      "id": "builder-to-evaluator",
+      "source": "builder",
+      "target": "independent-evaluator",
+      "kind": "verify",
+      "enabled": true,
+      "required": true,
+      "temporal": "same_epoch",
+      "artifactTypes": [
+        "deliverable"
+      ],
+      "activation": {
+        "mode": "all",
+        "nodeStates": [
+          {
+            "nodeId": "builder",
+            "status": "succeeded"
+          }
+        ],
+        "artifacts": [
+          "deliverable"
+        ],
+        "approvals": []
+      }
+    }
+  ],
+  "rewritePolicy": {
+    "automaticRiskLevels": [
+      "low"
+    ],
+    "approvalRiskLevels": [
+      "medium",
+      "high"
+    ],
+    "prohibitedMutations": [
+      "change-goal",
+      "weaken-completion-criteria",
+      "change-authority",
+      "expand-permissions",
+      "remove-approvals",
+      "rewrite-history"
+    ]
+  },
+  "metadata": {
+    "createdBy": "operating-graph",
+    "createdAt": "2026-07-18T12:00:00Z"
+  }
+}

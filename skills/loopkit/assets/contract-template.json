@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "goal": {
+    "title": "__REPLACE_ME__",
+    "outcome": "__REPLACE_ME__"
+  },
+  "evidence": {
+    "machine_checks": [
+      {
+        "id": "__REPLACE_ME__",
+        "command": "__REPLACE_ME__"
+      }
+    ],
+    "judgment_criteria": []
+  },
+  "boundaries": {
+    "allowed_paths": [],
+    "forbidden_paths": [],
+    "external_actions": []
+  },
+  "iteration": {
+    "max_iterations": 1,
+    "no_progress_limit": 1
+  },
+  "stops": {
+    "success": "__REPLACE_ME__",
+    "failure": "__REPLACE_ME__",
+    "blocked": "__REPLACE_ME__",
+    "exhausted": "__REPLACE_ME__"
+  }
+}

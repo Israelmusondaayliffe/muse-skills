@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gauntlet resource ledger",
+  "type": "object",
+  "required": ["captured_at", "limits", "usage"],
+  "properties": {
+    "captured_at": {"type": "string", "minLength": 1},
+    "limits": {"type": "object"},
+    "usage": {
+      "type": "object",
+      "required": ["elapsed_minutes", "agent_launches", "peak_concurrency", "target_changes", "support_artifact_count", "critic_rounds"],
+      "properties": {
+        "elapsed_minutes": {"type": "integer", "minimum": 0},
+        "agent_launches": {"type": "integer", "minimum": 0},
+        "peak_concurrency": {"type": "integer", "minimum": 0},
+        "target_changes": {"type": "integer", "minimum": 0},
+        "support_artifact_count": {"type": "integer", "minimum": 0},
+        "critic_rounds": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 0}
+        }
+      }
+    }
+  }
+}

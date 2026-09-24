@@ -1,0 +1,12 @@
+{
+  "skill": "model-evaluation-router",
+  "required": ["request_summary", "workflow_mode", "current_state", "selected_skill", "routing_reason", "required_artifacts", "missing_input", "next_action", "handoff_ready"],
+  "nonempty_strings": ["request_summary", "routing_reason", "missing_input", "next_action"],
+  "list_fields": ["required_artifacts"],
+  "boolean_fields": ["handoff_ready"],
+  "enums": {
+    "workflow_mode": ["plan", "execute", "normalize", "decide", "full-workflow"],
+    "current_state": ["new-question", "plan-ready", "raw-results", "normalized-results", "decision-ready", "blocked"],
+    "selected_skill": ["model-evaluation-plan", "benchmark-runner", "model-selection-memo"]
+  }
+}

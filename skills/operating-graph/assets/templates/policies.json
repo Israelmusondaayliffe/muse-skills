@@ -1,0 +1,46 @@
+{
+  "automaticRiskLevels": [
+    "low"
+  ],
+  "approvalRiskLevels": [
+    "medium",
+    "high"
+  ],
+  "prohibitedMutations": [
+    "change-goal",
+    "weaken-completion-criteria",
+    "change-authority",
+    "expand-permissions",
+    "remove-approvals",
+    "delete-audit-history",
+    "rewrite-historical-versions"
+  ],
+  "triggerPolicies": [
+    {
+      "id": "repeated-node-failure",
+      "trigger": "same-node-fails-twice",
+      "patterns": [
+        "replace_node",
+        "add_reviewer"
+      ],
+      "defaultRiskLevel": "medium"
+    },
+    {
+      "id": "contradiction",
+      "trigger": "two-artifacts-materially-contradict",
+      "patterns": [
+        "create_arbitration_node"
+      ],
+      "defaultRiskLevel": "low"
+    },
+    {
+      "id": "budget-pressure",
+      "trigger": "budget-consumption-exceeds-progress",
+      "patterns": [
+        "collapse_fanout",
+        "serialize_branch"
+      ],
+      "defaultRiskLevel": "low"
+    }
+  ]
+}

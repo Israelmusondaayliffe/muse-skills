@@ -1,0 +1,11 @@
+{
+  "schema_version": "ai-film-studio/iteration-record/v1",
+  "id": "iteration_example_arrival_001",
+  "shot_id": "shot_example_arrival_001",
+  "hypothesis": "The geography lock keeps the lead at the worktable while the arrival is recognized.",
+  "baseline": "Use an approved location and character state before testing the shot direction.",
+  "changed_variable": "Only the first-frame occupancy statement changes from the preceding attempt.",
+  "observed_evidence": ["Record the first visible failure or the specific condition that passed."],
+  "diagnosis": "direction",
+  "next_route": "shot-continuity-director"
+}

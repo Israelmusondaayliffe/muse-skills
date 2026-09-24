@@ -1,0 +1,17 @@
+{
+  "skill": "model-evaluation-plan",
+  "required": ["decision", "baseline", "candidates", "dataset", "metrics", "environment", "execution_backend", "budget", "cost_accounting", "stopping_rules", "decision_rule", "plan_ready"],
+  "nonempty_strings": ["decision", "baseline", "environment", "execution_backend", "budget", "cost_accounting", "decision_rule"],
+  "list_fields": ["candidates", "dataset", "metrics", "stopping_rules"],
+  "boolean_fields": ["plan_ready"],
+  "id_lists": ["dataset", "metrics"],
+  "item_required": {
+    "dataset": ["id", "description", "split", "provenance"],
+    "metrics": ["id", "kind", "definition", "direction"]
+  },
+  "item_enums": {
+    "dataset.split": ["success", "boundary", "failure"],
+    "metrics.kind": ["objective", "human", "mixed"],
+    "metrics.direction": ["higher", "lower", "target"]
+  }
+}

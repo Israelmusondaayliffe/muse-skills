@@ -1,0 +1,54 @@
+{
+  "packetType": "NodeReturnPacket",
+  "protocolVersion": 1,
+  "runId": "run-example",
+  "graphVersion": 1,
+  "epoch": 1,
+  "nodeId": "researcher-a",
+  "attempt": 1,
+  "agentId": "agent-example",
+  "taskPacketPath": "node-runs/researcher-a/attempt-1/task-packet.json",
+  "taskPacketSha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "launchRecordPath": "node-runs/researcher-a/attempt-1/thread-launch.json",
+  "launchRecordSha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+  "status": "succeeded",
+  "summary": "The bounded finding is complete.",
+  "actualWritePaths": [
+    "artifacts/researcher-a/finding.md"
+  ],
+  "artifacts": [
+    {
+      "artifactType": "research-finding",
+      "path": "artifacts/researcher-a/finding.md",
+      "sha256": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+      "mediaType": "text/markdown"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/researcher-a/finding.md",
+      "sha256": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+      "kind": "artifact-inspection"
+    }
+  ],
+  "criteria": [
+    {
+      "criterion": "The finding is supported by inspectable evidence.",
+      "result": "met",
+      "evidencePaths": [
+        "artifacts/researcher-a/finding.md"
+      ]
+    }
+  ],
+  "unresolvedIssues": [],
+  "risks": [],
+  "recommendedSignals": [],
+  "authority": {
+    "maySpawnWorkers": false,
+    "mayApprove": false,
+    "mayIntegrate": false,
+    "mayUpdateControllerState": false,
+    "mayAnswerUser": false,
+    "mayIssueTerminalVerdict": false
+  }
+}

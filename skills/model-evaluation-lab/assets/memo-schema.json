@@ -1,0 +1,11 @@
+{
+  "skill": "model-selection-memo",
+  "required": ["decision", "recommendation", "selected_option", "measured_results", "judgment", "tradeoffs", "limitations", "cost_interpretation", "deployment_conditions", "evidence_refs", "decision_ready"],
+  "nonempty_strings": ["decision", "selected_option", "judgment", "cost_interpretation"],
+  "list_fields": ["measured_results", "tradeoffs", "limitations", "deployment_conditions", "evidence_refs"],
+  "boolean_fields": ["decision_ready"],
+  "enums": {"recommendation": ["select-baseline", "select-candidate", "no-decision"]},
+  "id_lists": ["measured_results"],
+  "item_required": {"measured_results": ["id", "finding", "source", "confidence"]},
+  "item_enums": {"measured_results.confidence": ["high", "medium", "low"]}
+}

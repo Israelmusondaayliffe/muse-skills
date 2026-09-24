@@ -1,0 +1,30 @@
+{
+  "decision": "Select the next plugin wave.",
+  "recommendation": "Build the five candidates with the strongest readiness and distinct value.",
+  "options": [
+    {
+      "id": "O1",
+      "name": "Readiness-first wave",
+      "case_for": "Uses proven skills and clear boundaries.",
+      "case_against": "Defers newer product surfaces."
+    },
+    {
+      "id": "O2",
+      "name": "Novelty-first wave",
+      "case_for": "Adds new surfaces quickly.",
+      "case_against": "Requires more untested coordinator work."
+    }
+  ],
+  "evidence": [
+    "Candidate readiness ratings from the approved portfolio plan."
+  ],
+  "risks": [
+    "Static token cost may rise with larger bundles."
+  ],
+  "conditions": [
+    "All selected plugins must pass install and discovery gates."
+  ],
+  "confidence": "high",
+  "handoff": "Send accepted plugins to Plugin Creator for implementation."
+}
+

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://proofloop.local/schemas/record-v1.json",
+  "title": "ProofLoop record v1",
+  "type": "object",
+  "required": ["schema_version", "record_id", "record_type", "status", "created_at", "task_id", "privacy_class", "scope", "content", "provenance"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "record_id": {"type": "string", "minLength": 1},
+    "record_type": {"enum": ["observation", "experience", "candidate_lesson", "approved_advisory", "user_preference"]},
+    "status": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "task_id": {"type": "string", "minLength": 1},
+    "privacy_class": {"enum": ["public", "internal", "confidential", "restricted"]},
+    "scope": {"type": "object"},
+    "content": {},
+    "provenance": {"type": "array"}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,79 @@
+{
+  "_description": "JSON prompt schema for Image Prompt Architect. All prompts must follow this structure. Fields marked REQUIRED must always be populated. Fields marked CONDITIONAL are added when relevant to the scene.",
+  "_modes": ["text_to_image", "image_to_image_show_me", "image_to_image_edit"],
+
+  "generation_request": {
+    "meta_data": {
+      "tool": "REQUIRED. String. Target model (e.g., 'Nano Banana 2').",
+      "task_type": "REQUIRED. String. Descriptive snake_case label for this specific shot.",
+      "version": "REQUIRED. String. Collection or series label linking this prompt to the set."
+    },
+    "input": {
+      "mode": "REQUIRED. One of: text_to_image, image_to_image_show_me, image_to_image_edit.",
+      "notes": "REQUIRED. String. 2-4 sentence creative director brief. For image-to-image modes, MUST begin with 'Using the uploaded [explicit description]...'"
+    },
+    "scene": {
+      "location": "REQUIRED. Specific real-world or conceptual location.",
+      "time": "REQUIRED. Time of day and light condition.",
+      "environment": "REQUIRED. Minimum 3 specific environmental details: textures, atmosphere, depth, background elements, spatial character."
+    },
+    "subjects": {
+      "interaction": "REQUIRED. What subjects are doing. Specific moment, not generic pose.",
+      "emotion": "REQUIRED. Felt emotional quality, not adjective list.",
+      "micro_expression": "REQUIRED. What eyes, mouth, brow, jaw are specifically doing.",
+      "body_language": "REQUIRED. Posture, weight distribution, tension/relaxation, gestural details."
+    },
+    "styling": {
+      "subject_1": "REQUIRED. Complete outfit: color + material + construction + fit for each garment. Hair. Makeup. Accessories. No vague descriptions.",
+      "subject_2": "CONDITIONAL. Same detail level. Include when couple or team."
+    },
+    "camera": {
+      "lens": "REQUIRED. Focal length and lens character.",
+      "aperture": "REQUIRED. f-stop value.",
+      "depth_of_field": "REQUIRED. Specific DOF behavior and what it isolates or reveals.",
+      "framing": "REQUIRED. Shot type code (ECU/CU/MCU/MS/MFS/FS/WS/EWS) plus composition details.",
+      "angle": "REQUIRED. Camera height and orientation relative to subject.",
+      "motion": "REQUIRED. Still, handheld, motion blur, implied movement."
+    },
+    "lighting": {
+      "type": "REQUIRED. Source type and names of actual sources.",
+      "behavior": "REQUIRED. How light interacts with subjects, surfaces, atmosphere.",
+      "skin_response": "REQUIRED. How skin renders under this light. Always enforce natural texture."
+    },
+    "color": {
+      "palette": "REQUIRED. Specific colors present in frame, not mood words.",
+      "grade": "REQUIRED. Contrast, saturation, temperature, cinematic intent."
+    },
+    "realism": {
+      "faces": "REQUIRED when human subjects. Always anti-AI-beauty-filter.",
+      "skin": "REQUIRED when skin visible. Pores, imperfections, light interaction.",
+      "hair": "CONDITIONAL. Strand realism, movement, texture.",
+      "hands": "CONDITIONAL. Finger anatomy, grip accuracy. Include when hands visible.",
+      "anatomy": "REQUIRED when body visible. Posture physics, weight distribution.",
+      "fabric": "CONDITIONAL. Material behavior: drape, compression, wrinkles.",
+      "contact": "CONDITIONAL. Body-to-body or body-to-surface physics.",
+      "environment_detail": "CONDITIONAL. Key environmental realism anchors.",
+      "moment": "REQUIRED. What makes this feel like a real photograph. Unique per prompt.",
+      "_scene_specific_fields": "Add as needed: food, water, steam, crowd, vehicle_interior, props, glassware, screen, controllers, petals, umbrella, etc."
+    },
+    "rules": {
+      "no_text": "REQUIRED. Boolean. Always true.",
+      "no_perfect_pose": "REQUIRED. Boolean. Always true.",
+      "avoid": "REQUIRED. Array of strings. Minimum 8 scene-specific items. Never copy-paste across prompts.",
+      "_optional_rules": "Add as needed: no_ring, aspect_ratio_lock, etc."
+    },
+
+    "_image_to_image_additional_fields": {
+      "edit": {
+        "type": "For edit mode. One of: background_replace, styling_change, lighting_change, element_addition, element_removal, style_transfer, material_swap, time_shift, mood_shift.",
+        "changes": "Array of specific modifications.",
+        "preserve": "Array of elements to keep unchanged.",
+        "integration": "How changes blend with existing elements."
+      },
+      "consistency": {
+        "identity_markers": "For show-me mode. Features that must remain consistent.",
+        "lighting_logic": "How lighting adapts to new angle."
+      }
+    }
+  }
+}

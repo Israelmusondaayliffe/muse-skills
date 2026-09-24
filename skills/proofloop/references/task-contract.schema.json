@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://proofloop.local/schemas/task-contract-v1.json",
+  "title": "ProofLoop task contract v1",
+  "type": "object",
+  "required": ["contract_version", "task_id", "goal", "task_family", "eligibility_class", "success_criteria", "advisory_retrieval", "aggregation_rule", "verifiers", "budgets", "blocked_stop", "privacy_class", "storage_profile"],
+  "properties": {
+    "contract_version": {"const": "1.0"},
+    "task_id": {"type": "string", "minLength": 1},
+    "goal": {"type": "string", "minLength": 1},
+    "task_family": {"enum": ["code", "research", "structured_artifact", "creative_preference", "other"]},
+    "eligibility_class": {"enum": ["objective", "human_verifiable", "suggestion_only", "learning_ineligible"]},
+    "success_criteria": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["criterion_id", "statement", "evidence_minimum"]}},
+    "advisory_retrieval": {"type": "object", "required": ["enabled", "selections"]},
+    "aggregation_rule": {"const": "all_required"},
+    "verifiers": {"type": "array"},
+    "budgets": {"type": "object", "required": ["inner_drafts_max", "execution_attempts_max", "verifier_executions_max", "tool_calls", "wall_time_minutes", "memory_writes"]},
+    "blocked_stop": {"type": "string", "minLength": 1},
+    "privacy_class": {"enum": ["public", "internal", "confidential", "restricted"]},
+    "storage_profile": {"enum": ["none", "ephemeral", "workspace_ledger", "durable_adapter"]}
+  },
+  "additionalProperties": true
+}
