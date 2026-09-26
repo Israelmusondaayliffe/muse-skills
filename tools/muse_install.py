@@ -231,7 +231,7 @@ def main(argv=None):
         else:
             baseline = json.loads(args.baseline.read_text())["files"]
             reviewed = json.loads(args.staged_manifest.read_text())["files"] if args.staged_manifest else None
-            record = plan(args.staged, args.installed, baseline, policy, reviewed, set(args.exclude), args.only)
+            record = plan(args.staged, args.installed, baseline, policy, reviewed, set(args.exclude), args.only_skill)
             result = record if args.command == "plan" else apply(record, args.backup_dir, args.approval_ref)
         print(json.dumps(result, indent=2))
         return 1 if result.get("status") == "blocked" else 0

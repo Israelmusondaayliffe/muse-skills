@@ -1,4 +1,6 @@
 """Synthetic-tree tests for tools/muse_install.py. Never touches a real installation."""
+import contextlib
+import io
 import json
 from pathlib import Path
 import stat
@@ -47,6 +49,20 @@ class MuseInstall(unittest.TestCase):
 
     def plan(self, **kw):
         return mi.plan(self.new, self.inst, self.baseline, self.policy, self.reviewed, **kw)
+
+    def test_cli_plan_and_apply_use_only_skill(self):
+        policy, baseline, reviewed = (self.root / n for n in ("policy.json", "baseline.json", "reviewed.json"))
+        policy.write_text(json.dumps(self.policy))
+        baseline.write_text(json.dumps({"files": self.baseline}))
+        reviewed.write_text(json.dumps({"files": self.reviewed}))
+        common = ["--staged", str(self.new), "--installed", str(self.inst), "--baseline", str(baseline), "--staged-manifest", str(reviewed), "--only-skill", "s03"]
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(mi.main(["--policy", str(policy), "plan", *common]), 0)
+        self.assertEqual(json.loads(output.getvalue())["selected_skills"], ["s03"])
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(mi.main(["--policy", str(policy), "apply", *common, "--backup-dir", str(self.root / "cli-backup"), "--approval-ref", "synthetic CLI test"]), 0)
+        self.assertEqual((self.inst / "s03/SKILL.md").read_bytes(), (self.new / "s03/SKILL.md").read_bytes())
+        self.assertFalse((self.inst / "s04/bin/tool.py").exists())
 
     def test_plan_apply_rollback_preserves_private_and_local(self):
         profile = self.inst / "s00/references/voice-profile.md"
