@@ -1,206 +1,97 @@
 ---
 name: "gauntlet-loop"
-description: "Run the Gauntlet Loop: explicit-only governed execution for unusually large, consequential projects — plan grilling, compiled workstreams, fresh-critic reviews, durable handoffs, and independent verification. Trigger only when the user explicitly says to run the gauntlet (or gauntlet loop) on a project. Never infer it from difficulty, size, subagent use, or urgency."
+description: "Run the Gauntlet Loop: explicit-only governed execution for a large, consequential multi-workstream project. Grill the plan, get it approved as the project constitution, compile bounded workstreams, run them with fresh critics, integrate in waves, hand off state durably, and finish with an independent verification panel. Use only when the user names the gauntlet loop or a governed gauntlet project (gauntlet loop, governed gauntlet, gauntlet workstreams, resume the gauntlet loop). A bare 'run the gauntlet' with no existing state gets one question choosing between this skill and the artifact gauntlet (blind critics against a bar). Never infer it from difficulty, size, subagent use, or urgency."
 ---
 
 # Gauntlet Loop
 
-## Purpose
+Run a mega-project as a durable, bounded state machine: grill the goal, write an approved plan (the constitution), compile bounded workstreams, execute them with fresh critics, hand off state after every material event, and finish with an independent verdict. Missing evidence is failure, never a pass.
 
-Run a mega-project as a durable, bounded state machine: grill the goal,
-write an approved project constitution, compile bounded workstreams,
-execute them with fresh critics, hand off state after every material
-event, and finish with an independent verification verdict. The approved
-plan is the constitution; missing evidence is failure, never a pass.
+The project is finished only when an independent panel issued an evidence-based verdict, `reports/evidence-report.md` and `handoff.md` are current, `gauntletctl.py validate` passes, and the user has the artifact paths and caveats. A plan, a compiled program, or a builder's report is progress, not done.
 
-## Explicit-only contract
+## Start here
 
-This skill runs **only** when the user explicitly asks for the gauntlet
-(or "gauntlet loop"). Never activate from project size, difficulty,
-subagent requests, urgency, or the word "gauntlet" in passing. Do not
-change the model, reasoning effort, or cost profile. Resuming a
-previously paused project in a new session also requires explicit
-invocation.
+1. **Is this the gauntlet loop?** Existing `<root>/.gauntlet/state.json` means this skill; resume it. Existing `<root>/.gauntlet/runs/` means the artifact gauntlet (`gauntlet` skill); do not touch it. With no state: workstreams, a plan to govern, or "gauntlet loop" means this skill; a bar to beat or blind comparison means `gauntlet`. A bare "run the gauntlet" gets one choice question and nothing is initialized. Never mix the two editions' state; `gauntletctl.py init` refuses a root that holds `.gauntlet/runs/` or `.gauntlet/sealed/`, even with `--force`.
+2. **Read before asking.** Read the project and its closest instructions, then `.gauntlet/state.json`, `project.md`, `handoff.md`, and `decisions.md` when they exist. Decisions already recorded are not re-asked.
+3. **Record capabilities honestly.** `python3 bin/gauntletctl.py capabilities --project-root <root> --agent-tools available --max-concurrency <n>`. Add `--fresh-isolation --isolation-evidence "<observed check>"` only when you observed isolation, for example a spawned child could not produce a canary string that exists only in the parent turn. A host or model name is not proof. Without evidence the record says `unknown`, and the final verdict carries that caveat (`verified_with_caveats` at best).
+4. **Route by state** (all commands run from this skill's directory):
 
-## Capability mapping
+| State | Stage | First command |
+|---|---|---|
+| none | Plan | `python3 bin/gauntletctl.py init --project-root <root> --name "<name>" --actor lead-agent` |
+| `intake`, `grilling`, `plan_proposed` | Plan | `python3 bin/gauntletctl.py transition --project-root <root> --to grilling --actor lead-agent --reason "<why>" --next-action "<question>"` |
+| `plan_approved` | Compile | write `.gauntlet/gauntlet.yaml`, then `transition --to gauntlet_compiled` |
+| `gauntlet_compiled`, `executing`, `integrating` | Run | `python3 bin/gauntletctl.py validate --project-root <root>` |
+| any material event or session end | Handoff | `python3 bin/gauntletctl.py handoff --project-root <root> --actor lead-agent ...` |
+| `ready_for_verification`, `verifying` | Verify | `python3 bin/gauntletctl.py validate --project-root <root> --strict` |
+| `paused`, `blocked`, `waiting_for_user` | Report the hold and the one thing needed | read `handoff.md` |
 
-| Plugin concept | Hatch/Muse equivalent |
-|---|---|
-| Fresh agent, no inherited turns (`fork_turns: "none"`) | Spawn a new subagent with a self-contained brief — fresh context is guaranteed by design; never resume an old task as a substitute |
-| Bounded subagent threads | Subagents I spawn, with disjoint write targets or serialized writes |
-| User-owned Codex tasks / external thread topologies | Not available; durable channels (cron, hooks, separate chats) need separate explicit user approval and are never critics |
-| `.codex-plugin` / `.claude-plugin` manifests | Not used |
-| Host hooks (PreCompact, SessionStart) | Replaced by the handoff checklist below — continuity is maintained eagerly in `.gauntlet/handoff.md` |
+Transitions follow `references/state-machine.md`. Each records actor, reason, artifacts, and the exact next action.
 
-Record the live envelope at intake:
+## Stage 1: Plan
 
-```bash
-python3 ~/workspace/skills/gauntlet-loop/bin/gauntletctl.py capabilities \
-  --project-root <root> --agent-tools available --max-concurrency <n> --fresh-isolation
-```
+1. Move to `grilling`. Use `references/grill-me-method.md`: one material question at a time, only questions whose answer changes scope, evidence, authority, or the resource envelope. Implementation details the lead can decide are not questions. A general "grill me" outside a gauntlet project belongs to `strategy-room`.
+2. Draft `.gauntlet/plan.md` from `assets/plan.md`: scope and exclusions, evidence, acceptance criteria, stop conditions, and a finite resource envelope (section 22): elapsed minutes, agent launches, max concurrency, critic rounds per workstream, metered cost (0 unless the user names a ceiling). Unedited `init` defaults are 30 minutes, 6 launches, concurrency 2, 2 critic rounds. "No fixed round count" is invalid.
+3. Keep `decisions.md`, `assumptions.md`, `risks.md`, `open-questions.md`, `source-register.md` current. Transition to `plan_proposed`.
+4. Present the plan and ask for approval once. Only the user's approval in the current task moves to `plan_approved`: add `Status: approved` to `plan.md` and an `Approval:` line to `decisions.md` quoting the user's words and date. The transition gate checks both. Then `validate`.
 
-## Workflow
+## Stage 2: Compile
 
-State lives in `<project-root>/.gauntlet/`. Move only along the
-transitions in `references/state-machine.md` (e.g.
-`intake → grilling → plan_proposed → plan_approved → gauntlet_compiled →
-executing → integrating → ready_for_verification → verifying →
-verified | verified_with_caveats | failed_verification | unable_to_verify`).
-`waiting_for_user`, `blocked`, `paused`, and `stopped` are valid holds.
-Every transition records actor, reason, artifacts, and the exact next
-action. Use `bin/gauntletctl.py` for `init`, `transition`, `validate`,
-`handoff`, `validate-handoff`, `usage`, `capabilities`, and `evidence`.
+Requires `plan_approved`. Write `.gauntlet/gauntlet.yaml` (JSON-compatible) with the approved envelope in `budget`: per workstream an ID, objective, dependencies, exact write targets, evidence and acceptance criteria, builder and critic charters, max critic rounds. Keep the dependency graph acyclic; parallel work only on disjoint write targets. Compile a verification panel of at least three perspectives (acceptance and scope, evidence and correctness, integration and adversarial). Write the charters (`assets/workstream-charter.md`), `integration/integration-plan.md`, and `verification/acceptance-matrix.md`. Transition to `gauntlet_compiled` and validate.
 
-### Stage 1 — Plan
+## Stage 3: Run
 
-1. Explore the project and its closest instructions first.
-2. If no `.gauntlet/state.json` exists, initialize:
-   `gauntletctl.py init --project-root <root> --name <name> --actor lead-agent`
-3. Move to `grilling`. Use `references/grill-me-method.md`: one material
-   question at a time, exposing ambiguity, tradeoffs, failure modes,
-   authority boundaries, evidence standards, and irreversible choices.
-   Stop when the plan can be written without dangerous ambiguity; don't
-   ask the user to decide implementation details the lead can determine.
-4. Draft `.gauntlet/plan.md` from `assets/plan.md`. Make concrete: scope
-   and exclusions, evidence, acceptance criteria, stop conditions, and a
-   finite resource envelope — elapsed time, subagent launches, max
-   concurrency, critic rounds per workstream, and extension conditions.
-   "No fixed round count" is invalid; any extension needs user approval.
-5. Update `decisions.md`, `assumptions.md`, `risks.md`,
-   `open-questions.md`, and `source-register.md` after each material
-   event. Transition to `plan_proposed`.
-6. **Hard stop:** present the plan and ask for explicit approval. Only an
-   approval in the current task moves to `plan_approved`. Then validate:
-   `gauntletctl.py validate --project-root <root>`.
+1. Before each dispatch, confirm `agent_launches` in `budget-ledger.json` plus the launches you are about to make stays within `budget.max_agent_launches`, and concurrency within `max_concurrency`. Record usage right after launching: `gauntletctl.py usage --project-root <root> --agent-launches <total> ...`. The command rejects a ledger over the limits. It cannot see launches you do not record and does not cap account-wide spend.
+2. Dispatch only dependency-ready workstreams, each with its bounded charter (`references/multi-thread-execution.md`).
+3. Critics get only the approved goal, the bar, artifact paths, constraints, evidence locations, and the verdict schema (`assets/critic-report.json`), never builder transcripts. Verdicts: `bar_wins`, `artifact_wins`, `tie`, `unable_to_evaluate` (`references/critic-contract.md`).
+4. Integrate in waves (`references/integration-waves.md`). Progress means integrated deliverable change; new reports do not count. Stop and re-plan when support artifacts grow while deliverables stay flat.
+5. When every workstream and wave passes its gate, transition to `ready_for_verification`. The lead never issues the verdict.
 
-### Stage 2 — Compile
+## Stage 4: Handoff
 
-Requires `plan_approved`. Turn the plan into an executable program —
-no work starts yet.
+After every material event and before a likely session end: `gauntletctl.py handoff --project-root <root> --actor <actor> --objective <o> --completed <c> --failures <f> --next-action <a> --artifact <path> --evidence <path>`, then `validate-handoff`. Cover the 25 sections of `assets/handoff.md`, separating observed facts from assumptions (`references/session-handoffs.md`).
 
-1. Write `.gauntlet/gauntlet.yaml` as JSON-compatible YAML: for every
-   workstream, unique ID, objective, owner role, dependencies, bounded
-   inputs/outputs, exact write targets, evidence and acceptance criteria,
-   builder and independent critic charters, max critic rounds, retry /
-   block / stop rules.
-2. Keep the dependency graph acyclic. Parallel work only with disjoint
-   write targets; otherwise serialize. One integration owner controls
-   shared files and shared decisions.
-3. Compile an independent verification panel of at least three
-   perspectives (acceptance/scope, evidence/correctness, integration /
-   adversarial). Builders never issue the final verdict.
-4. Produce `.gauntlet/threads/lead.md`,
-   `.gauntlet/workstreams/<id>/charter.md` (from
-   `assets/workstream-charter.md`),
-   `.gauntlet/integration/integration-plan.md`, and
-   `.gauntlet/verification/acceptance-matrix.md`. Transition to
-   `gauntlet_compiled` and validate.
+## Stage 5: Verify
 
-### Stage 3 — Run
+Map every acceptance criterion to artifact, check, evidence path, and caveats (`assets/verifier-report.json`). Spawn at least three read-only judges with only the plan, program, artifacts, source register, evidence, acceptance matrix, and reproduction commands (`references/verification-panel.md`), within the envelope. Synthesize by re-examining evidence, not by vote. Then `gauntletctl.py evidence --project-root <root> --verdict <verdict>`, transition to the verdict, validate.
 
-Requires a compiled program. Execute within the approved scope, evidence
-rules, and resource envelope.
+## Worked example (illustrative, synthetic)
 
-1. Dispatch only dependency-ready workstreams to subagents, each with
-   the bounded charter, allowed inputs, write targets, tests, evidence
-   requirements, and stop conditions.
-2. Criticize integrated waves: one fresh subagent critic may cover
-   several completed low-risk workstreams; high-risk work gets its own
-   critic. The critic brief contains only the approved goal, the bar,
-   artifact paths, constraints, evidence locations, and the verdict
-   schema (`assets/critic-report.json`) — never builder transcripts.
-3. The critic inspects the real artifact and returns `bar_wins`,
-   `artifact_wins`, `tie`, or `unable_to_evaluate`, identifying the
-   largest meaningful gap. Accept, revise, block, or fail per
-   `references/critic-contract.md`. Builders do not judge their own work.
-4. After launches, rounds, target changes, or meaningful elapsed time,
-   record usage: `gauntletctl.py usage --project-root <root> ...`
-   Progress means integrated deliverable delta — new reports and receipts
-   don't count. Stop and re-plan when support artifacts grow while
-   target changes stay flat.
-5. Integrate in waves: inspect for contradictions, terminology drift,
-   incompatible formats, uneven evidence, and incoherence
-   (`references/integration-waves.md`). Repair only within the approved
-   plan and budget; preserve competing evidence until resolved.
-6. When all workstreams and waves satisfy their gates, transition to
-   `ready_for_verification`. Never issue the final verdict yourself.
+Request: "Run the gauntlet loop on Harbor Handbook: three volunteer chapters and a table of contents."
 
-### Stage 4 — Handoff
+- Routing: "gauntlet loop" plus workstreams, so this skill. No state exists; `init`, then `capabilities` without `--fresh-isolation` (nothing observed yet), then `transition --to grilling`.
+- First question: "Who is the primary reader: new volunteers or returning ones?" The brief lists this as open and it changes tone and depth of all three chapters. Not asked: file format or chapter order, which the lead can decide.
+- Envelope proposed with the plan: 3 chapter workstreams plus 1 integration owner; 2 critic rounds each; the panel needs 3 judges. That is 3 builders, up to 6 critics, 3 judges: 12 launches, 90 minutes, no metered spend. The init default of 6 launches cannot finish this, so the plan states 12 and the user approves or trims it.
+- After approval: `Approval: 2026-09-25 user said "approved, 12 launches"` in `decisions.md`, `Status: approved` in `plan.md`, transition to `plan_approved`.
 
-Update `.gauntlet/handoff.md` eagerly after every material event —
-approval, state transition, completed or failed workstream, integration
-wave, new risk or blocker, verification finding — and before any likely
-session boundary. Never depend on hidden conversation context.
+A wrong version would ask five questions at once, compile before approval, pass `--fresh-isolation` because the host is Hatch, or keep launching after the ledger reaches the cap.
 
-1. Generate: `gauntletctl.py handoff --project-root <root>
-   --actor <actor> --objective <o> --completed <c> --failures <f>
-   --next-action <a> --artifact <path> --evidence <path> ...`
-   Cover all 25 template sections (`assets/handoff.md`): plan and state,
-   completed work, changed artifacts, evidence and weaknesses, decisions,
-   assumptions, risks, open findings, workstream/source/integration
-   status, exact next actions, read-first files, commands, what not to
-   redo, what not to assume, user instructions, provenance. Separate
-   observed facts from assumptions.
-2. Validate: `gauntletctl.py validate-handoff --project-root <root>`.
-3. Comprehension check: spawn one bounded reader subagent with only the
-   project root; ask it to state objective, state, completed work,
-   unresolved risks, exact next action, forbidden redo, and forbidden
-   assumptions from `project.md` + `handoff.md`. The reader must not
-   edit files or continue the project. Repair discrepancies, re-validate.
+## When something goes wrong
 
-### Stage 5 — Verify
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| `transition gate failed for plan_approved` | No `Status: approved` or no `Approval:` record | Ask for approval; record the user's words | the user has not approved |
+| `budget ledger update rejected` | Recorded usage exceeds the approved limit | Stop dispatching; report used versus approved | extension needs a new recorded approval |
+| `init` refuses: artifact gauntlet state exists | Root holds `.gauntlet/runs/` | Use another project root | always; never `--force` past it |
+| Critic returns `unable_to_evaluate` | Missing artifact or evidence path | Fix the brief inputs once; re-run the critic within the round cap | second time: mark the workstream blocked |
+| `validate` fails after compile | Cyclic dependencies, overlapping write targets, bad budget | Fix `gauntlet.yaml`; re-validate | the fix would change approved scope: back to plan |
+| Capability drift (fewer slots, no subagents) | Host changed | Record new capabilities; recompile or ask | never improvise a broader program |
 
-Requires `ready_for_verification` (or a repairable post-verification
-state). Issue the verdict from independent evidence, never builder
-confidence.
+## Completion
 
-1. Map every acceptance criterion to the artifact, the observable check,
-   the evidence path, and known caveats
-   (`assets/verifier-report.json`, `schemas/verifier-report.schema.json`).
-   A criterion without inspectable evidence is not passed.
-2. Spawn at least three bounded judge subagents (acceptance/scope,
-   evidence/correctness, integration/adversarial) with only the plan,
-   program, artifacts, source register, evidence archive, acceptance
-   matrix, and reproduction commands. Read-only unless the user
-   separately authorizes repair. Builders and integration owners cannot
-   judge.
-3. Synthesize by re-examining evidence, not by vote. Verdicts:
-   `verified` | `verified_with_caveats` | `failed_verification` |
-   `unable_to_verify` (missing evidence/access/isolation ⇒ the latter).
-4. Generate the report: `gauntletctl.py evidence --project-root <root>
-   --verdict <verdict>`. Transition state to the verdict and validate.
-5. For failed/unable: identify the smallest repairable scope. Returning
-   to execution needs explicit invocation and remaining budget; scope or
-   budget expansion needs user approval. A new panel re-checks repairs.
-
-## Output contract
-
-- `.gauntlet/project.md`, `brief.md`, `plan.md`, `state.json`,
-  `gauntlet.yaml`, `decisions.md`, `assumptions.md`, `risks.md`,
-  `open-questions.md`, `progress.md`, `source-register.md`,
-  `artifact-register.md`, `budget-ledger.json`, `runtime-capabilities.json`
-- `workstreams/<id>/charter.md`, `workstreams/<id>/current-state.md`,
-  builder artifacts, test evidence, fresh critic reports
-- `integration/integration-plan.md`, `synthesis-report.md`,
-  `contradiction-register.md`
-- `verification/acceptance-matrix.md`, `verifier-reports/`,
-  `unresolved-findings.md`
-- `reports/evidence-report.md`, `handoff.md`, `sessions/` records
+- `verified` or `verified_with_caveats`: panel verdict, evidence report, current handoff, validation passing. Name every caveat, including unconfirmed isolation.
+- `failed_verification` or `unable_to_verify`: identify the smallest repairable scope. Returning to execution needs explicit invocation and remaining envelope; more needs approval.
+- `paused` on budget: report launches and minutes used against approved, and what finished. Resource exhaustion is not success.
 
 ## Operating rules
 
-1. Invocation never authorizes publication, deployment, purchases,
-   external messages or uploads, permission or credential changes, new
-   cron jobs or hooks, destructive actions, Goal creation, or silent
-   model/effort escalation. Those retain normal approval requirements.
-2. Capability drift stops execution: recompile or ask the user; never
-   improvise a broader program.
-3. A user may accept a result below the original bar — record the
-   override and remaining gap in `decisions.md`.
-4. Technical access is capability, not authority. A task list is not a
-   constitution; a builder's report is not evidence; resource exhaustion
-   is not success.
-5. Complete only when the independent panel has issued an
-   evidence-based verdict, the evidence report and handoff are current,
-   validation passes, and the user receives exact artifact paths and
-   caveats.
+1. Invocation never authorizes publication, deployment, purchases, external messages, credential changes, new cron jobs or hooks, destructive actions, or model or effort changes.
+2. Technical access is capability, not authority. A task list is not a constitution; a builder's report is not evidence.
+3. A user may accept a result below the bar; record the override and the remaining gap in `decisions.md`.
+
+## Resources
+
+- `bin/gauntletctl.py`: `init`, `transition`, `validate`, `handoff`, `validate-handoff`, `usage`, `capabilities`, `evidence`.
+- `references/`: `state-machine.md`, `gauntlet-method.md`, `grill-me-method.md`, `project-constitution.md`, `workstream-design.md`, `critic-contract.md`, `integration-waves.md`, `multi-thread-execution.md`, `session-handoffs.md`, `verification-panel.md`, `evidence-report.md`, `quality-bars.md`, `knowledge-work-bars.md`.
+- `assets/`: `plan.md`, `project.md`, `handoff.md`, `workstream-charter.md`, `thread-charter.md`, `critic-report.json`, `verifier-report.json`, `evidence-report.md`. `schemas/` holds the JSON schemas.
+- State: `<root>/.gauntlet/` (`state.json`, `plan.md`, `gauntlet.yaml`, `budget-ledger.json`, `runtime-capabilities.json`, `decisions.md`, `handoff.md`, `workstreams/`, `integration/`, `verification/`, `reports/`).

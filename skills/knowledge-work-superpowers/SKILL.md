@@ -1,31 +1,24 @@
 ---
 name: "knowledge-work-superpowers"
-description: "Run substantial non-coding knowledge work end to end: framing, planning, systematic research, evidence-first analysis, sourced drafting, staged execution, parallel research strands, review, feedback handling, fresh verification, and delivery handoff. Use for research reports, memos, comparisons, recommendations, and decision briefs — anything multi-source, high-stakes, or expected to guide a decision. Skip for simple lookups or one-step answers."
+description: "Run substantial non-coding knowledge work end to end: framing, planning, systematic research, evidence-first analysis, sourced drafting, staged execution, parallel research strands, review, feedback handling, fresh verification, and delivery handoff. Use for research reports, memos, comparisons, recommendations, and decision briefs, or anything multi-source, high-stakes, or expected to guide a decision. Skip for simple lookups or one-step answers, and for grill me, interview me, or pressure-test this decision requests, which belong to strategy-room."
 metadata: { "includeInPrompt": true }
 ---
 
 # Knowledge Work Superpowers
 
-## Purpose
-
 Route substantial knowledge work (research, analysis, planning, drafting, review, verification, handoff) through the smallest set of phases that protects quality. Full phase procedures live in `references/phases.md`; templates in `assets/`; the bundle checker in `bin/verify_research_bundle.py`.
 
-## Trigger And First Decision
+The work is finished when the requested deliverable exists at its agreed location, and every material claim in it traces to a source that supports it, or is labeled inferred, disputed, or unresolved. The fresh checks must have been run. A source list, an outline, or a plan is not the report.
 
-Use this skill when one or more apply:
+## Start here
 
-- The work has several steps or sources.
-- The output will guide a decision.
-- The user wants deep research, an evidence-backed result, or a reusable artifact.
-- Current or disputed facts matter.
-- Errors would be costly or embarrassing.
-- The task will produce a report, memo, brief, comparison, recommendation, or research package.
+1. **Name the deliverable and the decision it serves.** Take the audience, format, and location from the request. If they are all there, record the frame and proceed; do not ask for approval of a frame the user already gave.
+2. **Choose fast path or full phases.** Use the fast path for a single lookup, a simple transformation, or a low-stakes answer: answer with the source inline. Use full phases for anything multi-source, decision-guiding, current, disputed, or costly if wrong.
+3. **Inventory sources before researching.** Open every supplied file. List each source with an ID, and mark any listed source that is missing, unreadable, or out of bounds (for example "no web access") as `not accessed`, with the reason. Do not cite it.
+4. **Run the phases the task needs** (router below), reading each phase's section in `references/phases.md` first. Skip a phase only when its output already exists; state the reason in one line.
+5. **Verify fresh before delivery.** Recompute any calculation with a deterministic tool, open each cited source against its claim, and run the bundle checker when the output is a file bundle.
 
-Use a fast path (one direct lookup or transformation, cited inline) when the task is a single lookup, a simple transformation, or a low-stakes answer that does not need an evidence trail. This skill is not a substitute for domain-specific legal, medical, financial, or compliance review.
-
-## Phase Router
-
-Read the full procedure for a phase in `references/phases.md` before executing it:
+## Phase router
 
 1. Unclear outcome, audience, scope, or success criteria → **Framing** (work brief)
 2. Approved brief or clear multi-step requirements → **Planning** (executable plan)
@@ -39,46 +32,63 @@ Read the full procedure for a phase in `references/phases.md` before executing i
 10. About to call the work complete → **Verification before delivery** (fresh checks)
 11. Verified work needs packaging → **Finishing a deliverable** (delivery note)
 
-Default sequence for a new substantial task: frame → plan → research and build the evidence record → analyze claims → draft from evidence → review → verify with fresh checks → finish and hand off. Skip a phase only when its output already exists or the task does not need it; state the reason briefly.
+Default sequence for a new substantial task: frame → plan → research and build the evidence record → analyze claims → draft from evidence → review → verify with fresh checks → finish and hand off. This skill is not a substitute for domain-specific legal, medical, financial, or compliance review. Decision interviews ("grill me", "pressure-test this decision") belong to `strategy-room`.
 
-## Host Capabilities Mapping
+## Worked example (illustrative, synthetic)
 
-Translate "source of truth" and verification steps into what this host can actually run:
+Request: "Using the three attached files, recommend which of two community grant programs our small nonprofit should apply to. One-page memo for the board."
+
+- Frame: deliverable is a one-page memo for the board; the decision is which program to apply to; the sources are the three files only.
+- Inventory: S1 is Program A's 2025 guidelines, S2 is Program B's 2023 guidelines, and S3 is Program B's 2025 update. S3 supersedes S2 on eligibility.
+- Judgment: S2 requires at least two years of operation, and S3 raises that to three years. The nonprofit is two and a half years old. Record "The nonprofit is not yet eligible for Program B" as `supported` (S3). Keep S2 in the ledger as superseded, and do not cite it for the conclusion. Missing this would recommend a grant the nonprofit cannot receive.
+- Draft: recommend Program A. Cite S1 for the award size and deadline, and state that Program B becomes an option after the third anniversary (S3).
+- Verify: open S1 and S3 again beside each cited sentence; recompute the deadline countdown with a date tool.
+
+A wrong version would average the two Program B documents, cite the 2023 rule because it appeared first, or state an award amount from memory.
+
+## When something goes wrong
+
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| A listed source is missing, paywalled, or out of bounds | Access or scope limit | Mark it `not accessed` in the source ledger with the reason; mark claims that depend on it `unresolved` | always; never cite an unopened source |
+| Two sources disagree | Different dates or definitions | Record both; prefer the most recent authoritative source for that specific claim; mark `disputed` if unresolved | the conflict cannot change the recommendation, or it is shown to the user |
+| A recomputed number differs from the draft | Arithmetic, units, or a missed condition (add-on, discount, threshold) | Fix the draft from the recomputation; recheck every figure derived from it | the second recomputation agrees |
+| `verify_research_bundle.py` fails | Missing file, placeholder text, bad table row, unknown source ID | Fix the named finding and rerun | the second run fails; report the findings verbatim |
+| The request grows mid-task | Scope drift | Finish the agreed deliverable; list the new question as a next action | the user explicitly re-scopes |
+| A step needs a logged-in or rendered page | Live-browser work | Main assistant: run the host's live-browser task with the user's confirmation. Subagent: return the exact step to the parent. Otherwise mark the claim `unresolved: needs live browser` | the browser task is unavailable |
+
+## Completion
+
+- **Delivered:** the deliverable at its location, the evidence package (brief, plan, source and claim ledgers, review, verification results), known limitations, and a delivery note with what was delivered, what was verified, the limits, and one next action.
+- **Delivered with limits:** as above, with named gaps (for example an inaccessible source) stated in the deliverable and the delivery note, not only in the ledger.
+- **Blocked:** the missing input or access, its owner, and every part completed without it.
+
+## Host capabilities
 
 - Internal facts (email, calendar, messages, device galleries): the matching connected skill (`~/workspace/skills/` or `/opt/hatch/skills/`); load its `SKILL.md` first.
 - Working documents in `~/workspace/`: file tools (`muse.read`, `muse.write`, `muse.edit`).
-- Public current facts: `browser.search` and `browser.open`; never treat training memory as current.
-- Logged-in sites, forms, purchases, multi-step web interactions: delegate a browser task to an eligible parent/agent (subagents cannot do this themselves).
-- Calculations and data: rerun with a deterministic tool (shell, `python3`) and check units, denominators, date ranges.
-- Repetition and monitoring: `cron` for scheduled checks; `hooks` for event-driven ones.
-- Parallel research strands: spawn subagents when permitted, with separate artifact paths so they never write the same ledger concurrently.
+- Public current facts: `browser.search` and `browser.open`, unless the request forbids web access. Never treat training memory as current.
+- Logged-in sites, forms, purchases, multi-step web interactions: see the live-browser row in the recovery table.
+- Calculations and data: rerun with a deterministic tool (shell, `python3`) and check units, denominators, and date ranges.
+- Scheduled or event-driven follow-ups: the host's `cron` or `hooks`, only when the user asks for one. If either is unavailable at run time, say so rather than implying monitoring.
+- Parallel research strands: subagents when permitted, each with its own artifact path so no two write the same ledger.
 
-## Operating Rules
+## Operating rules
 
-1. Do not present inference as sourced fact.
-2. Do not cite a source that does not support the nearby claim.
-3. Do not claim completion without fresh verification.
-4. Do not expand scope silently.
-5. Do not use subagents when user or platform instructions prohibit it.
-6. Preserve progress in files (brief, plan, source ledger, claim ledger, review, delivery note), not chat history. After a resumed session, inspect those artifacts before repeating work.
-7. When you need personal input (writing samples, business details, audience facts, credentials, permissions), ask the user. Do not invent user-specific data.
-8. External actions (sending, publishing, sharing, moving, deleting) need separate authority. Without it, prepare the artifact and stop at handoff.
+1. Do not present inference as sourced fact, or cite a source that does not support the nearby claim.
+2. Do not claim completion without fresh verification.
+3. Do not expand scope silently.
+4. Do not use subagents when user or platform instructions prohibit it.
+5. Preserve progress in files, not chat history. After a resumed session, inspect those artifacts before repeating work. For long research, keep `research-handoff.md` in the output root: source ledger, open questions and conflicts, boundaries and stop condition, next action, verification state.
+6. Ask the user for personal input (writing samples, business details, audience facts, credentials, permissions). Do not invent user-specific data.
+7. External actions (sending, publishing, sharing, moving, deleting) need separate authority. Without it, prepare the artifact and stop at handoff.
 
-## Workflow Durability
+## File-based verification
 
-Long work should survive interruption: keep the brief, plan, ledgers, progress record, and delivery note beside the deliverable or in the user-approved output location. For long research, also write `research-handoff.md` in the output root containing the complete source ledger, open questions and unresolved conflicts, research boundaries and stop condition, the next action, and the current verification state.
-
-## Output Contract
-
-A finished engagement produces, at minimum: the verified deliverable at its agreed location, the evidence package preserved (brief, plan, source and claim ledgers, review, verification results), known limitations recorded, and a delivery note summarizing what was delivered, what was verified, the limits, and one recommended next action.
-
-## File-Based Verification
-
-For a standard research bundle, run from this skill directory:
+With `SKILL=~/workspace/skills/knowledge-work-superpowers` (or this skill's actual folder). The self-test runs from any directory and writes only to a system temporary folder:
 
 ```bash
-python3 bin/verify_research_bundle.py /path/to/bundle --profile research    # or: --profile deliverable
-python3 bin/verify_research_bundle.py --self-test
+python3 "$SKILL/bin/verify_research_bundle.py" --self-test
 ```
 
-Expected filenames and table schemas are documented by the templates in `assets/`. Chat-only tasks can run the same checks manually. This structural check does not replace opening sources and inspecting claim support.
+For a bundle: `python3 "$SKILL/bin/verify_research_bundle.py" BUNDLE_DIR --profile research` (brief, plan, ledgers) or `--profile deliverable` (adds `deliverable.md`, `review.md`, `delivery-note.md`). Expected filenames and table columns follow the templates in `assets/`. The checker tests structure and traceability; it does not replace opening sources and checking claim support.

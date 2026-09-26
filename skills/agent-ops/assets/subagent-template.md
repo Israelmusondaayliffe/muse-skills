@@ -24,7 +24,7 @@ Stop conditions: stop and report when [success]. If [failure] persists after
 block. Maximum [N] iterations or [time budget]. Reaching the cap is not
 completing the objective.
 
-Output: hand back [exactly what, in what shape — e.g. full report with file
+Output: hand back [exactly what, in what shape, e.g. full report with file
 paths as sandbox Markdown links, what was skipped, what is unverified].
 ```
 

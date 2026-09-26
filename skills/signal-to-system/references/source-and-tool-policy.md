@@ -8,11 +8,11 @@ availability is not evidence quality.
 | Job | First source | Add when needed |
 | --- | --- | --- |
 | Understand the user's situation | Supplied text and files; memory and workspace notes | A connected skill the user names |
-| Check current public facts | Web search and primary owners | Page-text fetch; live-browser delegation to parent for dynamic pages |
+| Check current public facts | Web search and primary owners | Page-text fetch; live-browser task for dynamic pages (see below) |
 | Compare products, services, prices, links, or availability | Current web search | Official pages plus a second source for material claims |
 | Work from Gmail, Calendar, Spotify, device files, or other connected sources | The connected skill the user names | Current web evidence when outside facts matter |
 | Perform an on-the-machine action | Terminal shell, file tools, workspace | Cron or hooks only after explicit user approval |
-| Perform a logged-in or rendered-web action | Delegate to the parent for live-browser work | Never fake it with text fetching |
+| Perform a logged-in or rendered-web action | Live-browser task (see below) | Never fake it with text fetching |
 
 Do not inspect a connected source merely because it is available. Connected
 data may be stale, irrelevant, private, or expensive to load. Use it when the
@@ -36,10 +36,17 @@ policies, recommendations, or public sentiment.
 
 ## Live browser and external action
 
-As the assistant, text fetching cannot click, sign in, fill forms, buy, or
-verify rendered/dynamic state. Delegate live-browser steps to the parent agent,
-which controls the Chromium session. Never claim a page visit when only text
-was fetched.
+Text fetching cannot click, sign in, fill forms, buy, or verify
+rendered/dynamic state. The live-browser session has one terminal owner:
+
+- Main assistant: run the step as the host's live-browser task, with the
+  user's confirmation.
+- Subagent: return the exact step (URL, what to check, why) to the parent
+  and finish every other part. Do not delegate it further.
+- No live browser available: record the claim as
+  `unchecked: needs live browser` in the artifact and stop that step.
+
+Never claim a page visit when only text was fetched.
 
 External writes, messages, purchases, publishing, account changes, or writes
 to a connected service always require explicit user authorization in the

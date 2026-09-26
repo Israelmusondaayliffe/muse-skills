@@ -74,6 +74,8 @@ Select the highest-impact unresolved dependency. Ask one to three tightly linked
 - Distinguish facts, constraints, preferences, assumptions, and decisions.
 - Follow each answer down its branch until it is closed.
 
+Before yielding for an answer, checkpoint the settled branches and the exact open question in the requested destination. Deliver the useful draft without pretending the decision is final. Do not poll or sleep for an answer; resume on the next reply.
+
 Close a branch only when its decision, rationale or governing constraint, dependencies, and acceptance test are clear. Then update the ledger and move to the next unresolved branch.
 
 Record only decisions that change downstream work. Include the chosen vocabulary, the rejected alternative when it matters, and the consequence. Do not turn the ledger into a transcript.

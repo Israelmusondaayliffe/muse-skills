@@ -1,6 +1,6 @@
 # Extended AI Pattern Catalog
 
-12 additional patterns not covered in the core 24-pattern taxonomy. These supplement `references/ai-pattern-taxonomy.md`. Load both when doing a full Phase 2 scan.
+12 additional patterns not covered in the core 24-pattern taxonomy. These supplement `references/linkedin/ai-pattern-taxonomy.md`. Load both when doing a full Phase 2 scan.
 
 Source: avoid-ai-writing (conorbronsdon, MIT). Synthesized and paraphrased.
 

@@ -22,10 +22,10 @@ import sys
 from datetime import datetime, timezone
 
 DEFAULT_BUDGETS = {
-    "rounds_cap_per_piece": 10,
-    "wave_cap": 4,
-    "wall_clock_hours_per_session": 6,
-    "subagent_cap_per_run": 400,
+    "rounds_cap_per_piece": 2,
+    "wave_cap": 1,
+    "wall_clock_hours_per_session": 0.5,
+    "subagent_cap_per_run": 6,
 }
 
 INSPECTION_TEXT_EXTS = {".txt", ".md", ".json", ".log", ".csv", ".out"}
@@ -240,7 +240,7 @@ def stop_distance_rows(run_dir, run, pieces, budgets, cost, now):
         rows.append(("wall clock per session", "no open session",
                      "%sh" % fmt_num(wall_limit), "n/a"))
 
-    subagent_cap = int(as_number(budgets.get("subagent_cap_per_run")) or 400)
+    subagent_cap = int(as_number(budgets.get("subagent_cap_per_run")) or 6)
     subagents = as_number(cost.get("subagents_total"))
     rows.append(("subagent cap", fmt_num(subagents) if subagents is not None else "not recorded",
                  str(subagent_cap),

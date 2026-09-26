@@ -42,8 +42,11 @@ Runtimes are the production surfaces actually available here — record the
 choice in the route JSON and validate with `bin/validate_route.py`:
 
 - `ffmpeg` — assembly, slideshows, overlays, caption burn-in, audio mixing.
-  Always available (`/usr/bin/ffmpeg`, `/usr/bin/ffprobe`).
-- `ai-generation` — `media.generate_image` / `media.generate_video` for
+  Check before choosing it: `command -v ffmpeg ffprobe`. If either is
+  missing, rendering is blocked; do not record `renderer_available: true`.
+- `ai-generation` — only when `media.generate_image` / `media.generate_video`
+  (or another generation tool) appears in the current tool list and the user
+  approved its cost. Use it for
   AI-created visuals and clips.
 - `browser-capture` — delegate a live-browser task for website screenshots/
   scroll capture when the user asked for a website video.
@@ -53,4 +56,6 @@ choice in the route JSON and validate with `bin/validate_route.py`:
 - `none` — planning only (see references/planning-bundle.md).
 
 Never claim a renderer you did not use. When the user asked only for a plan,
-use runtime `none` and completion state `planning-complete`.
+use runtime `none` and completion state `planning-complete`. When the user
+asked for a clip, a plan is never the finished state: use `rendered-partial`
+or `blocked` and list what is missing.

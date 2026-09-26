@@ -177,10 +177,10 @@ def initial_program() -> dict[str, Any]:
             "resume_requires_explicit_invocation": True,
         },
         "budget": {
-            "max_elapsed_minutes": 240,
-            "max_agent_launches": 24,
-            "max_concurrency": 3,
-            "max_critic_rounds_per_workstream": 4,
+            "max_elapsed_minutes": 30,
+            "max_agent_launches": 6,
+            "max_concurrency": 2,
+            "max_critic_rounds_per_workstream": 2,
             "extension_requires_user_approval": True,
         },
         "global_quality_bar": {"description": "Pending approved plan", "dimensions": [], "evidence_required": []},
@@ -195,6 +195,9 @@ def command_init(args: argparse.Namespace) -> dict[str, Any]:
     if not project_root.exists() or not project_root.is_dir():
         raise GauntletError(f"project root is not a directory: {project_root}")
     root = gauntlet_dir(project_root)
+    if (root / "runs").exists() or (root / "sealed").exists():
+        # The artifact-comparison gauntlet skill owns .gauntlet/runs and .gauntlet/sealed.
+        raise GauntletError(f"gauntlet (artifact comparison) state exists in {root}; use another project root. --force does not override this.")
     if root.exists() and any(root.iterdir()) and not args.force:
         raise GauntletError(f"refusing to overwrite existing Gauntlet workspace: {root}")
 
@@ -1076,6 +1079,8 @@ def command_evidence(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def command_capabilities(args: argparse.Namespace) -> dict[str, Any]:
+    if args.fresh_isolation and not (args.isolation_evidence or "").strip():
+        raise GauntletError("--fresh-isolation requires --isolation-evidence describing an observed check")
     data = {
         "captured_at": now(),
         "host": "Hatch",
@@ -1086,11 +1091,12 @@ def command_capabilities(args: argparse.Namespace) -> dict[str, Any]:
         "agent_tools": args.agent_tools,
         "thread_tools": args.thread_tools,
         "max_concurrency": args.max_concurrency,
-        "fresh_no_inherited_turns_supported": args.fresh_isolation,
+        "fresh_no_inherited_turns_supported": True if args.fresh_isolation else "unknown",
+        "isolation_evidence": args.isolation_evidence,
         "limitations": [
             "The script cannot inspect model-visible tool inventory by itself.",
             "Parent model, effort, and host mode remain user-selected.",
-            "Subagent isolation holds by construction: every spawned subagent starts with no inherited transcript.",
+            "Isolation is recorded from evidence the lead supplies; a host or model name is not proof.",
         ],
     }
     destination = gauntlet_dir(Path(args.project_root)) / "runtime-capabilities.json"
@@ -1189,6 +1195,7 @@ def parser() -> argparse.ArgumentParser:
     capabilities.add_argument("--thread-tools", choices=["available", "unavailable", "unknown"], default="unknown")
     capabilities.add_argument("--max-concurrency", type=int, default=1)
     capabilities.add_argument("--fresh-isolation", action="store_true")
+    capabilities.add_argument("--isolation-evidence", help="Observed check, e.g. a spawned child could not read a canary from the parent turn")
     capabilities.set_defaults(handler=command_capabilities)
 
     usage = sub.add_parser("usage")

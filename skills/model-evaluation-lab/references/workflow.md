@@ -30,7 +30,7 @@ The validator requires one allowed stage, one current state, named prerequisites
 
 - Stop at planning when candidates, cases, metrics, or decision rules are not fixed.
 - Stop at execution when candidate coverage or environment conditions diverge.
-- Stop before the decision memo when results are partial, incomparable, or unsafe.
+- Do not rank partial, incomparable, or unsafe results. The decide stage then writes a `no-decision` memo that names the run needed to resolve it (see `memo-guide.md`, Error recovery).
 
 ## Error recovery
 

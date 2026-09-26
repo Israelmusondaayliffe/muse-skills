@@ -22,9 +22,11 @@ Planning can be complete without claiming anything was rendered.
 ## Route record
 
 Record the route in `route.json` (from `assets/route-template.json`) with
-`runtime: "none"`, `renderer_available: false`,
-`completion_state: "planning-complete"`, `rendering_status` and
-`visual_qc_status` as `incomplete`. Validate:
+`requested_deliverable: "plan"`, `runtime: "none"`, `renderer_available: false`,
+`completion_state: "planning-complete"`, `missing_requirements: []`,
+`rendering_status` and `visual_qc_status` as `incomplete`. When the user
+asked for a clip and rendering is blocked, the bundle is still useful but the
+state is `blocked`, with the blocker in `missing_requirements`. Validate:
 
 ```bash
 python3 <SKILL_DIR>/bin/validate_route.py route.json
@@ -34,10 +36,16 @@ python3 <SKILL_DIR>/bin/validate_route.py route.json
 
 - `planning-complete` — the six artifacts exist and agree; rendering and
   visual QC remain incomplete.
-- `rendered-delivery-complete` — a renderer produced the delivery file and
-  delivery QC completed technical + visual checks (references/delivery-qc.md).
+- `rendered-delivery-complete` — a renderer produced the delivery file,
+  delivery QC completed technical + visual checks (references/delivery-qc.md),
+  and nothing the user requested is missing.
+- `rendered-partial` — a render exists, but a requested element is missing
+  (audio, captions, a supplied or required asset, the size or length). List
+  each one in `missing_requirements`.
+- `blocked` — a clip was requested and no usable render exists. A plan
+  never fulfills a requested clip.
 
-Never mark `rendered-delivery-complete` without a real rendered file and a
-completed QC pass. If source media is missing, stop before inventing
+Never mark `rendered-delivery-complete` without a real rendered file, a
+completed QC pass, and an empty `missing_requirements`. If source media is missing, stop before inventing
 substitutes that change the brief. If platform dimensions are unknown,
 state the assumed target and keep the layout adaptable.

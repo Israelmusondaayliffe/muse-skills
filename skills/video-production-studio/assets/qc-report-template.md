@@ -29,3 +29,7 @@ Frames inspected (timestamps):
 ## Result
 
 Pass, fail, or blocked. List any untested requirement.
+
+Requested but missing from the delivery (audio, captions, assets, size, length):
+
+Completion state (`rendered-delivery-complete` only when the list above is empty; otherwise `rendered-partial` or `blocked`):

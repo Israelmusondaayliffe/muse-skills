@@ -36,10 +36,11 @@ no default blue/gray, no system-ui-as-brand.
 
 Write `STORYBOARD.md` concept-first: message → narrative arc → beats that
 serve the arc → technique per beat. Then `SCRIPT.md` for narration, one line
-per beat. Present a beat-by-beat summary and get user approval before
-building. Do not skip this gate in autonomous mode for preference questions —
-but approval of the story plan itself is still required unless the user said
-"decide everything".
+per beat. When the user asked for a finished video and supplied what it
+needs, that request authorizes the build: write the storyboard, show a
+short beat summary alongside the work, and keep building. Stop for approval
+only when the user asked to review the plan first, when a key fact (product
+claims, names, brand copy) is missing, or before any paid generation.
 
 Slide/beat writing rules (from the slideshow and explainer playbooks):
 
@@ -73,8 +74,9 @@ Output to `renders/<project>-v1.mp4` (h264, yuv420p, aac).
 
 ## Stage 6 — Deliver (render gate)
 
-Render to MP4 only on explicit request or when the brief asked for a video
-file. Otherwise the handoff is the preview/playable file plus the QC report.
+A request for a video is a request for the rendered file: render the MP4.
+Deliver only a plan when the user asked for a plan, or when rendering is
+blocked (then say what blocked it).
 
 ## Stage 7 — QC
 
@@ -84,7 +86,7 @@ assets/qc-report-template.md. Fix failures, rerun both checks.
 
 ## Gates that never skip
 
-- Storyboard approval (Stage 2) — unless the user delegated all decisions.
+- Cost approval before any paid generation or narration call.
 - Technical + visual QC (Stage 7) — a rendered file is not complete until
   both pass. Report untested requirements honestly; never claim a pass you
   did not run.

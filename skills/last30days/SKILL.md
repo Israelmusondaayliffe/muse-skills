@@ -9,7 +9,10 @@ description: "Research what people have actually said about any topic in the las
 Produce honest, recency-disciplined research: what people, communities, and markets have said about a topic **inside the last 30 days**. Separate fresh evidence from stale background, and name sources that failed instead of calling them quiet. No credentials needed for the default lanes.
 
 ## Route the request
-- Fresh topic research, comparisons, trend discovery: **Workflow: Research** below.
+First, fix the window: today's date and the date 30 days earlier. Every recency label uses these two dates.
+- Fresh topic research and A-vs-B comparisons: **Workflow: Research** below.
+- "What's trending / what's new in <domain>" with no single topic: **Workflow: Discovery**.
+- The user supplied saved lane output (API JSON, fetched page text, a collection log) or said not to search live: **Research** from those files only. Each file is a lane; its log line decides returned evidence / returned nothing / failed. Do not add live searches.
 - "Monitor X / add a topic / what's changed": **Workflow: Watchlist**.
 - "Morning brief / weekly summary of my topics": **Workflow: Briefing**.
 - "Something isn't working / which sources can I use": **Workflow: Health**.
@@ -45,9 +48,9 @@ Track every lane as one of: **returned evidence / returned nothing / failed**. F
 3. A thin or empty result is valid: report "nothing solid in this window" honestly. Never retry around it or fabricate topics.
 
 ## Workflow: Watchlist (recurring monitoring)
-State lives at `~/workspace/last30days/watchlist.json` (empty template on first use; never invent topics).
-- `add "TOPIC" --schedule daily|weekly`: append the topic, then create a cron job that re-runs the Research workflow and appends dated findings to `~/workspace/last30days/topics/<slug>/`.
-- `delta "TOPIC"`: diff the latest run against the previous one. Report new items, engagement changes, and coverage changes first.
+State lives at `~/workspace/last30days/watchlist.json` unless the task names another folder. Layout, a safe add command and the delta order are in `references/watchlist.md`. Never invent topics.
+- `add "TOPIC"`: add it without disturbing existing topics, run Research, and save dated findings to `topics/<slug>/<YYYY-MM-DD>.md`. Create a cron job only when the user asked for daily or weekly runs.
+- `delta "TOPIC"`: compare the newest findings file with the previous one. Report new items, engagement changes (old and new values), and coverage changes first.
 - `list` / `remove "TOPIC"` (confirm the exact topic first) / `pause`.
 - Delivery: briefings arrive as Feed units or chat messages by default. Webhooks or any other external send need explicit user approval naming the destination.
 
@@ -61,6 +64,30 @@ State lives at `~/workspace/last30days/watchlist.json` (empty template on first 
 Run the connectivity checklist with `muse.exec` + curl (see `references/sources.md` for the exact probes):
 - Report each lane as: **working / failed / not configured**. A configured-but-unverified source is not healthy until it returns real data.
 - Optional tools (`yt-dlp`, `gh` CLI): describe the install command and destination first, get user approval before installing anything.
+
+## Worked example (illustrative)
+
+Topic "heat pumps in cold climates", today 2026-09-25, window from 2026-08-26. Lanes: social search returned a dozen dated posts, the web lane three pages (one dated 2026-06-02, one undated), HN one thread, GitHub was skipped as irrelevant, Reddit failed with a "Blocked" page, and Polymarket returned zero markets.
+
+- Evidence: the social posts and the HN thread are dated in window. The June page is background: useful for how defrost cycles work, not "recent". The undated page is neither.
+- Pattern judgment: "defrost cycles are louder than owners expected" appears in several unrelated social posts and a dated installer blog, so it is a pattern. One viral post claiming a 60% bill cut is one post, cited as that, not a trend.
+- Coverage note: "social, web, HN returned evidence; Polymarket returned nothing; Reddit failed (blocked); GitHub skipped." Reddit is not "quiet".
+
+A wrong version would list the June page among this month's findings, say Reddit had no discussion, or repeat the 60% figure as typical savings.
+
+## When something goes wrong
+
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| A lane returns a "Blocked" page or HTTP 403/429 | Egress block or rate limit | Record it as failed; use another lane from `references/sources.md` | never retry the same blocked endpoint in a loop |
+| Items have no date | Page or API omits it | Treat them as background; say so | never present them as last-30-days evidence |
+| Every lane returns nothing | Quiet topic or a bad query | Try one reframed query (`references/query-preflight.md`) | second empty sweep; report "nothing solid in this window" |
+| Watchlist file will not parse | Corrupt or hand-edited state | Leave it untouched and report the error | always; do not overwrite user state |
+| User asks for a briefing with no watched topics | Empty watchlist | Say so and point to Watchlist | never fabricate a briefing |
+
+## Completion
+
+Done means the requested answer follows the Output Contract, every "recent" claim cites a dated item inside the window, and the coverage note names each lane's outcome. For watchlist work, the state file and dated findings exist in the state folder, and any cron job created was requested. If a lane or step is blocked, deliver the rest and name it.
 
 ## Output Contract
 - First line: `📰 last30days · synced {YYYY-MM-DD}`, one blank line, then `What I learned:` followed by bold-lead-in paragraphs, then `KEY PATTERNS from the research:` and a numbered list. No invented title lines, no `##` section headers in a general-topic body.

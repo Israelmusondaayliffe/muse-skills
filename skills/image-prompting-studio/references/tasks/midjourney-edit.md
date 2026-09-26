@@ -15,4 +15,4 @@ Read first: `../prompt-contract.md` and the Midjourney entry in `../model-profil
 
 Finish when the change, references, preserved features and format are clear and no invented detail or unsupported control is presented as certain. A prompt does not prove the edit succeeded. Inspect actual output when provided; the user selects accepted results and reusable recipes.
 
-Source attribution for the imported Midjourney edit material is recorded in `../LICENSE-NOTICES.md`.
+Source attribution for the imported Midjourney edit material is recorded in `../../LICENSE-NOTICES.md`.

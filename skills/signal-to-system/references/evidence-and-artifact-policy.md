@@ -32,9 +32,10 @@ Use the skill's template as a coverage check, not a rigid form.
   automation benefits from it.
 - Write to Gmail, Calendar, or another connected destination only when the
   user requests that destination.
-- Do not create every possible deliverable. Workshop Workbench and Session
-  Compounder must recommend useful outputs and wait for the user's selection
-  before producing a large package.
+- Do not create every possible deliverable. When the user has not named the
+  outputs, Workshop Workbench and Session Compounder recommend useful outputs
+  and wait for the user's selection before producing a large package. A
+  request that already names the outputs counts as the selection.
 
 ## Claims and links
 

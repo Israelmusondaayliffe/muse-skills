@@ -1,10 +1,9 @@
 # Routing Examples
 
-## Decision grill
+## Decision grill (inside an Outcome Engine run)
 
-- "Grill me on whether this workshop should be live or recorded."
-- "Challenge this hiring plan before I commit."
-- "Ask me hard questions about the new onboarding flow."
+- "Run Outcome Engine on this workshop idea; start by settling whether it is live or recorded."
+- "Take the onboarding redesign from fuzzy to a first verified slice; ask me the hard questions first."
 
 ## Outcome brief
 
@@ -56,3 +55,5 @@
 - A direct request to look up one fact should use research or web tools.
 - A direct request to fix a known software bug should use diagnosis and implementation, not a full decision grill.
 - A request to send, publish, assign, purchase, or delete needs explicit authorization at that action boundary.
+- A standalone "grill me", "challenge this hiring plan before I commit", or "pressure-test this decision" with no execution goal belongs to `strategy-room`. A request that names Matt belongs to `matt-partok-bundled-plugin-for-knowledge-work`.
+- A request for a durable fresh-task handoff uses `continuity-vault` when that optional skill is installed. When it is absent, Outcome Engine writes a self-contained handoff inside the user-approved output root and does not rely on conversation history.

@@ -1,0 +1,40 @@
+{
+  "_note": "Exact 30 public Muse skills. Protected paths are never written by tools/muse_install.py; add each package's legacy in-package state here.",
+  "skills": [
+    "agent-ops",
+    "ai-film-studio",
+    "brand-studio",
+    "capability-operator",
+    "citizen-forge",
+    "continuity-vault",
+    "data-storytelling-studio",
+    "founder-revenue-engine",
+    "gauntlet",
+    "gauntlet-loop",
+    "guide-production-studio",
+    "harness-engineering",
+    "image-prompting-studio",
+    "knowledge-work-superpowers",
+    "last30days",
+    "loop-observatory",
+    "loopkit",
+    "matt-partok-bundled-plugin-for-knowledge-work",
+    "model-evaluation-lab",
+    "model-prompt-lab",
+    "operating-graph",
+    "outcome-engine",
+    "practice-compiler",
+    "proofloop",
+    "signal-to-system",
+    "skill-eval-loop",
+    "strategy-room",
+    "video-production-studio",
+    "web-product-studio",
+    "writing-quality"
+  ],
+  "protected": [
+    "writing-quality/references/voice-profile.md",
+    "practice-compiler/hidden_files/*",
+    "skill-eval-loop/state/*"
+  ]
+}

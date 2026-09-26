@@ -15,7 +15,7 @@ All eleven fields must be present and non-empty before `brief_complete.py` passe
 - done_means: {{done_means}} (one of: blind win, measured threshold, user judgment)
 - domain_primary: {{domain_primary}} (per-piece overrides live in `pieces.json`)
 - execution_shape: {{execution_shape}} (one of: S1, S2, S3)
-- budget_ceiling: {{budget_ceiling}} (rounds, wall clock, cost, or all three)
+- budget_ceiling: {{budget_ceiling}} (finite rounds, waves, wall clock, launches, and metered cost, stated to the user and approved before the run stage)
 - out_of_scope: {{out_of_scope}}
 - non_negotiables: {{non_negotiables}}
 - inspection_feasibility: {{inspection_feasibility}} (per proposed piece, at least one method from the closed set: run, test, measure, screenshot, render, reader-proxy, claim-audit, source-reach, red-team, read; read alone never qualifies)
@@ -40,11 +40,15 @@ All eleven fields must be present and non-empty before `brief_complete.py` passe
 
 ## Budgets
 
-- rounds_cap_per_piece: {{rounds_cap_per_piece}} (default 10)
-- wave_cap: {{wave_cap}} (default 4)
-- wall_clock_hours_per_session: {{wall_clock_hours_per_session}} (default 6)
-- subagent_cap_per_run: {{subagent_cap_per_run}} (default 400)
-- cost_ceiling: {{cost_ceiling}} (user-set at brief)
+- rounds_cap_per_piece: {{rounds_cap_per_piece}} (default 2)
+- wave_cap: {{wave_cap}} (default 1)
+- wall_clock_hours_per_session: {{wall_clock_hours_per_session}} (default 0.5)
+- subagent_cap_per_run: {{subagent_cap_per_run}} (default 6)
+- cost_ceiling: {{cost_ceiling}} (default 0, meaning no metered spend)
+- approved: {{true_after_user_accepts}} (default false; `check_stops.py` pauses the run until true)
+- approval_ref: {{where_the_user_approval_is_recorded}} (default null)
+
+Raise a cap only with the user's recorded approval. These limits are cooperative gates checked from run records, not account-wide enforcement.
 
 ## What this wave attempts
 

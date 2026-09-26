@@ -1,6 +1,6 @@
 # Rendering recipes (ffmpeg)
 
-`ffmpeg`/`ffprobe` live at `/usr/bin/ffmpeg`, `/usr/bin/ffprobe`. All recipes
+Confirm `ffmpeg`/`ffprobe` with `command -v ffmpeg ffprobe` first. All recipes
 assume h264 + aac delivery (`-c:v libx264 -pix_fmt yuv420p -c:a aac`).
 
 ## Slideshow assembly

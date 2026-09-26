@@ -35,8 +35,8 @@ Soft: "Make the importer fast and reliable."
 
 Concrete:
 
-- Bar: the existing test suite at `tests/importer/` passes, plus a latency target of p95 under 300 ms per 10k-row file, measured by `scripts/bench_importer.sh` against the three fixture files stored in `bar/refs/fixtures/`. Baseline numbers from the current implementation recorded in `bar/refs/baseline.json` at brief time.
-- Inspection: `test` (`inspection_command: pytest tests/importer/`) and `measure` (`inspection_command: scripts/bench_importer.sh`).
+- Bar: the existing test suite at `tests/importer/` passes, plus a latency target of p95 under 300 ms per 10k-row file, measured by `<project>/scripts/bench_importer.sh` (a script in the target project, not this skill) against the three fixture files stored in `bar/refs/fixtures/`. Baseline numbers from the current implementation recorded in `bar/refs/baseline.json` at brief time.
+- Inspection: `test` (`inspection_command: pytest tests/importer/`) and `measure` (`inspection_command: <project>/scripts/bench_importer.sh`).
 - Blind: partial, on behavior. Critics compare outputs and measurements from both implementations, never the source text.
 - `done_means`: measured threshold.
 

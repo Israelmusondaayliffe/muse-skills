@@ -21,3 +21,7 @@ Record what was observed for every check. Do not write a pass or fail without ev
 ## Boundaries
 
 Do not repair the underlying analysis. Route calculation, sampling, or data-quality failures to the analysis owner. Audit the message and evidence contract only.
+
+## Complete the repair loop
+
+For a build or revision request, repair authorized wording, scale, labels, or layout from the checked evidence, then audit the revised artifact once. Retain the original verdict and identify the revised file. A supported, narrower claim can replace an unsupported claim; missing analysis cannot be invented. Update the delivery status from the new audit. For audit-only work, give corrections without changing the artifact.

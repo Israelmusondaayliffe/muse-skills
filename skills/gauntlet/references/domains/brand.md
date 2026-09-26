@@ -37,7 +37,7 @@ Acceptance: 2 consecutive blind wins plus reader-proxy answers all three questio
 **3. Social template asset class piece (five carousel frames).**
 Bar: `bar/refs/carousel-refs/` renders plus hard constraints.
 Screenshot: `npx playwright screenshot templates/carousel-01.html rounds/social-templates/002/inspection/carousel-01.png` at 1080x1350, repeated for all five frames.
-Measure: the monochrome check across the whole `inspection/` directory, threshold zero chromatic pixels, plus a token check that every frame uses only the type sizes declared in `templates/tokens.json`.
+Measure: the monochrome check across the whole `inspection/` directory, threshold zero chromatic pixels, plus a token check that every frame uses only the type sizes declared in the brand project's `<project>/templates/tokens.json`.
 Acceptance: blind set-versus-set win in 2 consecutive rounds, both measures pass.
 
 ## Inspection methods, in priority order

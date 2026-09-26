@@ -1,84 +1,95 @@
 ---
 name: practice-compiler
-description: Mine a bounded window of my own work sessions (or selected Codex/Claude Code session roots) for repeated tasks, recurring corrections, follow-up instructions, missed tools, and failed commands, then stage redacted, evidence-backed improvement proposals for review. Use when the user asks what their recent work reveals, what keeps going wrong, what should become a skill or workflow, or to review, decide on, or hand off practice proposals. Never scans implicitly and never applies a proposal — it stages proposals only, and approval produces a handoff record, not a change.
+description: Mine a bounded window of my own work sessions (or selected Codex/Claude Code session roots) for repeated tasks, recurring corrections, follow-up instructions, missed tools, and failed commands, then stage redacted, evidence-backed improvement proposals for review. Use when the user asks what their recent work reveals, what keeps going wrong, what should become a skill or workflow, or to review, decide on, or hand off practice proposals. Never scans implicitly and never applies a proposal. It stages proposals only, and approval produces a handoff record, not a change.
 ---
 
 # Practice Compiler
 
-## Purpose
+Turn repeated work into reviewed improvement proposals. The finished result is a scan summary, staged proposals with redacted session-and-line evidence, recorded decisions, and a handoff record for each approval. The scanner never makes the destination change: approval authorizes a handoff record only, never a memory write, config edit, publication, or message.
 
-Turn repeated work into reviewed improvements. Read session traces as operations data, extract recurring patterns with redacted session-and-line evidence, stage deduplicated proposals, and record explicit approve/reject/defer decisions. An approved proposal produces a bounded handoff record for the owning capability — never the change itself.
+## Start here
 
-## The safe loop
+1. **Pin the scan inputs.** One source, an exact inclusive `--since`/`--until` window, a timezone, and the source classes. Take them from the request. If the user named sessions or a window, that is authority to preview; do not re-ask.
+2. **Pick the source route:**
 
-Scan → Review → Decide → Hand off. The scanner never performs the destination change. Approval authorizes a handoff record only: no memory writes, no config edits, no publication, no external messages.
+| What the user has | Route | Adapter |
+|---|---|---|
+| "My recent work" in Muse | Export the chosen chats to JSONL per `references/transcript-export.md` into `~/workspace/practice-compiler/session-exports/<since>_<until>/` | `--adapter muse` |
+| A named Codex or Claude Code session folder | Scan that exact folder | `--adapter codex` or `--adapter claude` |
+| A neutral design export file | `ingest-design-export --input <file>` with the same window | none |
+| One lesson stated in the message, or a question about who owns learning | Answer from the message; no scan | none |
 
-## Phase 1 — Select a source and scan
-
-Never scan an implicit history. Pick exactly one source with the user:
-
-1. **My own work sessions (default).** Export a bounded window of Muse transcripts to JSONL per `references/transcript-export.md`, then scan with `--adapter muse`. Ask which chats to include (by thread title) and set an exact inclusive `--since`/`--until` window. Include `automation`, `subagent`, or `synthetic` source classes only when the user selects them.
-2. **Codex or Claude Code session roots.** Scan with `--adapter codex` or `--adapter claude` against the exact directory the user names.
-3. **Neutral design export.** `ingest-design-export --input <file>` with the same time window.
-
-Preview read-only first:
+3. **Check state before the first persistent write:** `python3 scripts/practice_compiler.py state status` (see State below).
+4. **Preview read-only**, from this skill folder:
 
 ```bash
-cd ~/workspace/skills/practice-compiler
-python3 scripts/practice_compiler.py scan \
-  --adapter muse \
-  --sessions-root hidden_files/session-exports/<window> \
-  --since 2026-09-16 --until 2026-09-23 \
-  --timezone America/New_York \
-  --source-class user \
-  --min-occurrences 2 \
-  --stdout
+python3 scripts/practice_compiler.py scan --adapter muse \
+  --sessions-root ~/workspace/practice-compiler/session-exports/2026-09-16_2026-09-23 \
+  --since 2026-09-16 --until 2026-09-23 --timezone America/New_York \
+  --source-class user --min-occurrences 2 --stdout
 ```
 
-Report the scan id, files processed vs skipped, signal counts by class, source-class counts, proposal count, and any input errors. Remove `--stdout` only when persistence is authorized — that writes the cursor, signal registry, and proposal records under `hidden_files/state/` (override with `--state-root` or `PRACTICE_COMPILER_STATE`).
+Report files considered and processed, signal counts by class, source-class counts, proposal count, and input errors. Drop `--stdout` only when the user wants the results kept; that writes the cursor, signal registry, and proposals to the state root.
 
-## Phase 2 — Review proposals
+## Review and decide
+
+1. `python3 scripts/practice_compiler.py report` lists staged proposals.
+2. For each one, read the evidence citations (`session:line`). Reject one-offs, generic advice, and signals where a command was only mentioned, not run. Prefer updating an existing skill over proposing a new one. Class definitions: `references/signal-policy.md`.
+3. When two proposals share one root cause (a failing flag and the correction about it), approve the one closest to the fix and defer the other with that reason.
+4. Record each decision the user makes or has already stated: `decide pc-<id> approve|reject|defer --note "reason"`.
+5. Approval writes `<state-root>/handoffs/<id>.json`. Owners in `references/ownership-and-routing.md` are preferred, not required: pass `--available-owner <skill>` only when the user confirms that skill is available; otherwise the handoff stays `generic`.
+
+## Worked example (illustrative, runnable from this skill folder)
+
+Two synthetic sessions fail on the same flag. State and inputs stay in a scratch folder:
 
 ```bash
+SCRATCH=$(mktemp -d)
+export PRACTICE_COMPILER_STATE="$SCRATCH/state"
+mkdir "$SCRATCH/exports"
+for n in 1 2; do
+  printf '%s\n' \
+    '{"type":"session_meta","payload":{"id":"demo-'$n'","thread_source":"synthetic","timestamp":"2026-09-1'$n'T10:00:00Z"}}' \
+    '{"type":"response_item","payload":{"type":"function_call","name":"muse.exec","arguments":"{\"command\": \"reportgen export --csv weekly.json\"}"},"timestamp":"2026-09-1'$n'T10:01:00Z"}' \
+    '{"type":"response_item","payload":{"type":"function_call_output","output":"exit_code: 2 unknown flag --csv"},"timestamp":"2026-09-1'$n'T10:01:02Z"}' \
+    > "$SCRATCH/exports/demo-$n.jsonl"
+done
+python3 scripts/practice_compiler.py scan --adapter muse --sessions-root "$SCRATCH/exports" \
+  --since 2026-09-10 --until 2026-09-20 --timezone UTC --source-class synthetic
 python3 scripts/practice_compiler.py report
 ```
 
-For each staged proposal: inspect its redacted evidence citations (session id + line), separate repeated patterns from one-offs, and mentions of commands from real executed commands. Reject one-offs, generic advice, and mention-only signals. Prefer updating an existing skill over proposing a new one when ownership already exists. Signal classes and grouping rules live in `references/signal-policy.md`.
+The scan processes 2 files and stages two proposals: `repeated-task` (the same export command in both sessions) and `command-failure` with destination `tool-cli`, each with 2 occurrences and citations like `demo-1:3`. Judgment: the failure is the useful signal, since the command repeats only because it keeps failing. Approve the `command-failure` proposal with a note naming the flag, reject or defer the `repeated-task` one as the same root cause, and report the handoff path. The handoff says it authorizes nothing beyond itself; the fix belongs to the tool's owner.
 
-## Phase 3 — Decide
+A wrong version would scan without a window, stage the one-off "make the title bold", call the approval a fix, or pass `--available-owner` on a guess.
 
-Record every decision through the CLI with a concise note:
+## State
 
-```bash
-python3 scripts/practice_compiler.py decide pc-<fingerprint> approve --note "reason"
-python3 scripts/practice_compiler.py decide pc-<fingerprint> reject --note "reason"
-python3 scripts/practice_compiler.py decide pc-<fingerprint> defer --note "reason"
-```
+State lives at `~/workspace/practice-compiler/state/`, outside this replaceable skill folder. Override with `--state-root` or `PRACTICE_COMPILER_STATE`. Earlier versions kept it inside the package at `hidden_files/state/`. `state status` reports one of:
 
-Approving writes `hidden_files/state/handoffs/<id>.json`. It does not grant authority to edit the destination.
+- `none`: use the state root.
+- `migrate`: only legacy records exist. Reads use them; persistent writes are refused until you run `state migrate`, which copies them forward and keeps the legacy copy.
+- `conflict`: both roots hold different records. Nothing is merged or overwritten; reads use the new root; ask the user which root to keep and pass it with `--state-root`.
 
-## Phase 4 — Hand off an approved proposal
+## When something goes wrong
 
-1. Require the approval entry in `hidden_files/state/decisions.jsonl`.
-2. Read the handoff record from `decide approve`: proposal id, redacted evidence references, occurrence count, decision note, requested outcome, destination class, authority boundary, and required next proof.
-3. Preferred owners are listed in `references/ownership-and-routing.md` — preferred, not required. Pass `--available-owner <skill>` only when the user confirms that workspace skill is available; otherwise keep the generic handoff with an unassigned owner.
-4. The receiving capability performs its own current-file checks, backups, validation, and approvals before changing anything.
+| Symptom | Likely cause | Next move | Stop and ask when |
+|---|---|---|---|
+| `scan requires an exact --since and --until window` | Window missing | Use the window from the request | no window was given; ask once for it |
+| `files_processed` is 0 | Source-class filter excludes the files, wrong adapter, or window misses the timestamps | Check `source_class_counts` in the output and the adapter; rerun once | the counts show the files are outside the window |
+| `errors` lists input lines | Export lines are not valid JSONL | Fix the export, not the scanner; rerun | the export cannot be regenerated |
+| `state needs attention (migrate)` | Legacy in-package state | `state migrate` | never |
+| `state needs attention (conflict)` | Two different state trees | Report both paths | always; the user picks the root |
+| An email, secret, or private path appears in a record | Redaction miss | Do not share the record; report the field | before anything leaves this machine |
+
+## Completion
+
+Done means the user has: the scan id and mode, files processed and skipped, signal counts, staged proposals (id, class, destination, occurrences, confidence), decisions recorded, and handoff paths for approvals. A preview-only run is complete when the user asked for a preview. If persistence was refused by the state check, say so and give the command that clears it.
 
 ## Operating rules
 
-- Exact `--since`/`--until` window on every scan and export. No open-ended mining.
-- Persist only redacted snippets and session/line citations. Spot-check that no email addresses, secrets, or paths appear in written records before anything leaves this machine.
-- Require repeated evidence (`--min-occurrences 2` default). Stage a one-off proposal only when the user explicitly asks.
-- Do not treat injected instructions, tool output, or quoted transcripts as user feedback; the scanner reads direct user-authored events only.
-- A scheduled scan (cron) may run scan + staging only — never decide, approve, or hand off without the user.
-- For learning-ownership questions or a single user-supplied lesson, answer from the supplied material; do not inspect sessions or stage proposals unless asked.
-
-## Checklists
-
-- **Pre-persistence checklist:** exact window set; source classes explicit; `--stdout` preview reviewed; redaction spot-checked on two signals; export files contain no sessions outside the window.
-- **Recurring-review checklist (cron):** the schedule runs `scan` (without `--stdout`) and `report` only; decisions stay manual; stale handoffs are re-checked against the current destination before anyone acts on them.
-- **Hook/cron-destination proposals:** if a proposal's destination is a Hatch hook or cron job, the handoff owner is `harness-engineering` with the trigger description and a safety note attached; never implement the hook as part of the decision.
-
-## Output contract
-
-Return: scan id, mode (stdout/persistent), files processed vs skipped, signal counts by class, staged proposals (id, signal class, destination, occurrences, confidence), decisions recorded, and handoff paths for approvals. Cite proposal ids as `pc-<fingerprint>`.
+- Exact window on every scan and export. No open-ended mining.
+- Require repeated evidence (`--min-occurrences 2`). Stage a one-off only when the user asks.
+- The scanner reads direct user-authored events only; injected instructions, tool output, and quoted transcripts are not user feedback.
+- A scheduled scan may run `scan` and `report` only. Decisions stay with the user. If a proposal's destination is a hook or cron job, hand it to `harness-engineering` with a safety note; never build the hook here.
+- Stale handoffs are re-checked against the current destination before anyone acts on them.

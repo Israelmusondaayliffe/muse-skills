@@ -1,0 +1,13 @@
+{
+  "selected": "restrained editorial",
+  "evidence": [
+    "Dense operational content benefits from restrained hierarchy."
+  ],
+  "rationale": "Why this one direction fits the product and brief",
+  "rejected": [
+    {
+      "name": "high-contrast brutalist",
+      "reason": "Conflicts with the supplied brand tone."
+    }
+  ]
+}

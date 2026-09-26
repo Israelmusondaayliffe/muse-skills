@@ -36,7 +36,7 @@ python3 scripts/validate_output.py memo <memo.json>
 
 ## Error recovery
 
-Set `decision_ready` to false and use `no-decision` when a candidate run is incomplete, a safety stop fired, plan conditions changed, or the decision rule cannot distinguish the candidates.
+Set `decision_ready` to false and use `no-decision` when a candidate run is incomplete, a safety stop fired, plan conditions changed, or the decision rule cannot distinguish the candidates. The schema still requires a non-empty `selected_option`: name the baseline that stays in place and say in `judgment` that nothing was selected.
 
 ## Reliability
 

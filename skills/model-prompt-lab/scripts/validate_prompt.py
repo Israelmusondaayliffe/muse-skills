@@ -122,7 +122,7 @@ def check_approval_repetition(text):
             f"wait for approval / require confirmation). Repeating these on GPT-5.6 causes "
             f"unnecessary approval requests for safe, expected actions. Consolidate into ONE "
             f"compact autonomy policy that names safe local actions and confirmation-required "
-            f"actions. See autonomy-and-response-style.md."
+            f"actions. See references/gpt-5-6.md."
         )
     return issues
 
@@ -147,7 +147,7 @@ def check_brevity_without_contract(text):
             "GPT-5.6 is more concise by default than 5.5; 'be concise' style instructions "
             "can make responses too brief and drop required caveats or evidence. Either "
             "remove the instruction and re-test, or specify what a short answer must "
-            "include. See autonomy-and-response-style.md."
+            "include. See references/gpt-5-6.md."
         )
     return issues
 
@@ -244,7 +244,7 @@ def check_ptc_routing(text):
             "WARN: Programmatic Tool Calling present without a <tool_orchestration> block. "
             "Generic instructions do not produce correct routing. State the bounded stage, "
             "eligible tools, output schema, limits, and which work stays direct. See "
-            "programmatic-tool-calling.md."
+            "references/gpt-5-6.md."
         )
     else:
         if re.search(r'\[(?:bounded stage|eligible tools|output schema|condition)\]', text):
@@ -342,7 +342,7 @@ def check_recommended_blocks(text):
             issues.append(
                 "WARN: Search-using prompt without an explicit retrieval budget. "
                 "Define when enough evidence is enough to prevent search loops. "
-                "See research-and-citations.md."
+                "See references/gpt-5-6.md."
             )
         if "citation_rules" not in text and "cite" not in text_lower:
             issues.append("INFO: Research prompt without explicit citation handling. Citations may drift.")
@@ -355,7 +355,7 @@ def check_recommended_blocks(text):
             issues.append(
                 "WARN: Drafting prompt without a creative drafting guardrail. "
                 "Distinguish source-backed facts from creative wording. "
-                "See research-and-citations.md."
+                "See references/gpt-5-6.md."
             )
 
     # Extraction prompts
@@ -388,7 +388,7 @@ def check_recommended_blocks(text):
             issues.append(
                 "INFO: Action-taking agent prompt without an autonomy policy. GPT-5.6 is "
                 "proactive on multi-step tasks; define what each request type authorizes. "
-                "See autonomy-and-response-style.md."
+                "See references/gpt-5-6.md."
             )
 
     return issues
@@ -420,7 +420,7 @@ def check_preamble_pattern(text):
     if tool_heavy and not has_preamble and not any(s in text_lower for s in streaming_signals):
         issues.append(
             "INFO: Tool-heavy prompt without preamble pattern. If users see streaming output, "
-            "a short preamble improves perceived time-to-first-token. See api-parameters.md."
+            "a short preamble improves perceived time-to-first-token. See references/gpt-5-6.md."
         )
     return issues
 
@@ -443,7 +443,7 @@ def check_personality_split(text):
                 issues.append(
                     "INFO: Personality block appears to mix tone with task behavior. "
                     "Split into # Personality (how it sounds) and # Collaboration style "
-                    "(how it works). See personality-and-collaboration.md."
+                    "(how it works). See references/gpt-5-6.md."
                 )
     return issues
 

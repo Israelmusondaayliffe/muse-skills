@@ -3,7 +3,8 @@
 ## Narration — use the podcast skill
 
 Narration is produced with the `generate_podcast` skill (multi-voice audio
-composition). Feed it the `SCRIPT.md` lines; get back `narration.wav` plus
+composition) when that skill is in the current catalog; if it is absent,
+deliver an unnarrated cut or use user-supplied audio and say so. Feed it the `SCRIPT.md` lines; get back `narration.wav` plus
 word-level timings when the skill provides them. Keep those timings —
 captioning (references/captioning.md) consumes them directly.
 

@@ -32,8 +32,9 @@ or product reference instead of inventing a mood.
 ## Record
 
 Fill `assets/route-template.json`'s `design_constitution` field with the
-selected direction name or `null`, plus evidence and rationale, then run
-`scripts/validate_selection.py`.
+selected direction name or `null`. Record `selected`, `evidence`, `rationale`
+and `rejected` in a selection file shaped like `assets/selection-template.json`,
+then run `python3 scripts/validate_selection.py selection.json`.
 
 Recheck the rendered product against the selected direction and the source
 brief before delivery.

@@ -55,6 +55,8 @@ def main(operation: str | None = None) -> int:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
         if result.get("valid") is False or result.get("allowed") is False:
             return 2
+        if selected == "run-regressions" and result.get("failed"):
+            return 2  # a failing regression case is a failed check, not success
         return 0
     except (ValueError, json.JSONDecodeError, OSError) as error:
         print(json.dumps({"error": str(error)}, separators=(",", ":")))

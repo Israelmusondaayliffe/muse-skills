@@ -1,8 +1,11 @@
 # Voice Profile — NOT YET CALIBRATED
 
-No user voice profile has been calibrated. Follow the calibration workflow in
-SKILL.md and `references/voice-calibration.md`: ask the user for 2–3 writing
-samples, run `python3 bin/voice_profile.py` on them, and record the profile here.
+This file is a legacy location. The calibrated profile now lives outside the
+skill package, at `~/workspace/writing-quality/voice-profile.md`, so that
+updating the skill never overwrites it.
 
-Do not invent a voice in the meantime — use the generic clarity profile from
-`voice-calibration.md` and say so.
+Run `python3 bin/voice_state.py status` to find the active profile. If an older
+install left a calibrated profile here, `python3 bin/voice_state.py migrate`
+copies it to the state path and leaves this file untouched.
+
+Do not write new profiles here.

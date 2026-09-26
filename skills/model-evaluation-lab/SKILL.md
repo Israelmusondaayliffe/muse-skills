@@ -5,96 +5,100 @@ description: "Run reproducible model evaluations: freeze an evaluation plan (dec
 
 # Model Evaluation Lab
 
-## Purpose
+Replace model-choice impressions with a frozen plan, reproducible run records, normalized results, and a decision memo that separates measurement from judgment. The work is finished when the requested stage's artifact validates and its conclusion follows from the evidence, including "no decision" when the evidence cannot separate the candidates.
 
-Replace model-choice impressions with a fixed plan, reproducible run records, normalized results, and a deployment decision with explicit limitations. The skill runs as four stages with a routing front door. Muse itself performs the routing — there are no platform hooks here; the checklists below are run as procedures.
+## Start here
 
-## Stages
+1. **Inventory the artifacts.** Record what exists: decision question, baseline, candidates, frozen plan, plan hash, raw results, normalized results, prior memo. Open each file; do not assume an artifact exists.
+2. **Check the plan hash** whenever a plan and results are both present. Recompute it from the plan file and compare it with the `plan_hash` in the results. On a mismatch, stop and report it; results from a different plan cannot be judged against this one.
+3. **Route by artifact state** (table below). Write the routing record from `assets/router-template.json` and validate it when running more than one stage.
+4. **Produce and validate the stage artifact** with `scripts/validate_output.py`.
+5. **Deliver** the plain-language outcome plus the validated artifacts.
 
-Pick the entry stage from artifact state (see `references/workflow.md` for the full routing procedure):
+A frozen plan plus supplied raw results authorizes normalize and decide. Do not re-plan, re-interview, or rerun cases in that case. Ask only for inputs no file holds: the decision, the baseline, what changes between candidates, or backend authorization.
 
-| Stage | What it does | Reference | Artifact |
-|---|---|---|---|
-| `router` | Front door: inventory request and artifacts, select the next stage or stop on a missing prerequisite | `references/workflow.md` | routing record |
-| `plan` | Freeze the decision, baseline, candidates, cases, metrics, budget, backend, and stopping rules before results are visible | `references/plan-guide.md` | evaluation plan |
-| `execute` / `normalize` | Run the frozen plan on an authorized backend, or normalize supplied raw results into the stable comparison schema | `references/run-guide.md` | normalized run |
-| `decide` | Test evidence against the preregistered decision rule; produce a memo that separates measurement from judgment | `references/memo-guide.md` | selection memo |
+| Artifact state | Stage | Reference |
+|---|---|---|
+| No frozen plan, or the user asks what to compare | `plan`: freeze decision, baseline, candidates, cases, metrics, budget, backend, stopping rules | `references/plan-guide.md` |
+| Frozen plan, no raw results, backend authorized | `execute` | `references/run-guide.md` |
+| Frozen plan, no backend available | `blocked` handoff | `references/run-guide.md` |
+| Raw case results, no normalized run | `normalize` | `references/run-guide.md` |
+| Normalized run(s) | `decide`: memo | `references/memo-guide.md` |
+| Memo present | Report decision-ready state, or route a requested re-evaluation to `plan` | `references/workflow.md` |
 
-For a full evaluation, return to the router after each validated stage and choose the next stage from fresh artifact state.
+## Commands
 
-## Workflow
+With `SKILL=~/workspace/skills/model-evaluation-lab` (or this skill's actual folder). This self-check runs from any directory and writes nothing:
 
-1. **Inventory.** Record what exists: the decision question, baseline, candidates, frozen plan, plan hash, raw results, normalized results, prior memo. If the user has not stated the decision, the baseline, or what changes between candidates, ask — never invent them.
-2. **Route.** Classify the request as `plan`, `execute`, `normalize`, `decide`, or `full-workflow` per `references/workflow.md`. Write the routing record to JSON (template: `assets/router-template.json`) and validate it before acting on it.
-3. **Plan (never skipped).** With the user, freeze every field in `references/plan-guide.md`, write the plan JSON (template: `assets/plan-template.json`), validate it, and compute the plan hash:
-   ```bash
-   python3 -c "import hashlib;print('sha256:'+hashlib.sha256(open('plan.json','rb').read()).hexdigest())"
-   ```
-   Never select metrics after seeing results. Never compare candidates whose conditions changed mid-run as if they were identical.
-4. **Execute or normalize.** If completed raw case results were supplied, normalize them:
-   ```bash
-   python3 scripts/normalize_results.py raw.json normalized.json
-   ```
-   Otherwise run the frozen plan on an authorized backend (see Execution Backends). Save raw case-level records before aggregation, then normalize and validate. Never add cases after results are visible.
-5. **Decide.** Confirm run completeness and comparability, apply the frozen decision rule in evidence order (`references/memo-guide.md`), write the memo JSON (template: `assets/memo-template.json`), and validate it. Route human-facing prose through the `writing-quality` skill if the memo will be shared.
-6. **Deliver.** Summarize the outcome in plain language plus the validated artifacts. Decision memos meant for others are delivered as a readable document; the JSON artifacts are the machine-checked evidence trail.
-
-Validate every stage artifact with:
 ```bash
-python3 scripts/validate_output.py <router|plan|run|blocked|memo> <artifact.json>
+python3 "$SKILL/scripts/validate_output.py" plan "$SKILL/assets/plan-template.json"
 ```
 
-## Execution Backends
+For your own files:
+
+- Plan hash: `python3 -c "import hashlib,sys;print('sha256:'+hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())" plan.json`
+- Normalize: `python3 "$SKILL/scripts/normalize_results.py" raw.json normalized.json` (on bad input it prints the errors as JSON to stderr and exits 2)
+- Validate any stage: `python3 "$SKILL/scripts/validate_output.py" <router|plan|run|blocked|memo> ARTIFACT.json`
+
+Write new artifacts under `~/workspace/evals/<run-id>/` or the folder the user named. Do not overwrite supplied plan or raw files.
+
+## Worked example (illustrative, synthetic)
+
+Request: "Here is our frozen plan and the raw results for two summarization prompts. Pick the winner."
+
+- Inventory: plan, raw results. The recomputed plan hash matches.
+- Normalize: each candidate's raw file normalizes and validates with every case present. But the two `environment` fields show that the candidate prompt ran on dataset version 3 while the baseline ran on version 2. The validator cannot see this; you have to read the records. The candidate's higher mean score is therefore not a comparison.
+- Judgment: the frozen rule compares candidates on identical cases. Different dataset versions break comparability, whatever the scores say. A tempting shortcut is to compare only the overlapping cases. That is a post-hoc metric change, so it is not allowed.
+- Memo: `recommendation: "no-decision"`, `decision_ready: false`. `selected_option` names the baseline that stays in place, because the schema requires a non-empty string, and the judgment says so. `limitations` names the rerun that resolves it: the baseline on dataset v3 with the same environment.
+
+A wrong version would select the higher-scoring prompt, drop the mismatched cases after seeing results, invent the missing baseline scores, or edit the plan to fit the data.
+
+## When something goes wrong
+
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| Recomputed plan hash differs from the results' `plan_hash` | Plan edited after the run, or results from another plan | Report both hashes; ask which plan governed | immediately; do not decide on mismatched evidence |
+| Normalizer exits 2 | A case is missing a required field or has a negative or non-numeric value | Read the JSON error; fix only formatting (never values) and rerun | the fix would change a measured value; report the bad record |
+| `execution_status: "partial"` | Execution errors or unequal case coverage | Keep the successful records; write a `no-decision` memo naming the rerun | always, for selection; never fill missing cases |
+| No authorized backend for a requested run | No endpoint, credential, or runner | Write the blocked handoff from `assets/blocked-template.json` and validate it | at the handoff; never fabricate results |
+| A safety stop fired | Frozen safety rule triggered | Stop the run; record the event; memo is `no-decision` or `select-baseline` per the rule | immediately |
+| The decision, baseline, or candidate difference is unstated | Missing user input | Ask for that one item; plan nothing else yet | the user answers |
+
+## Completion
+
+- **Decided:** a validated memo whose recommendation follows the frozen decision rule, with measured results cited to the normalized run and judgment stated separately.
+- **No decision:** a validated memo with `no-decision`, `decision_ready: false`, the reason, and the exact additional run that would resolve it. This is a valid finished result.
+- **Blocked:** a validated blocked handoff (plan hash, backend requirement, case count, safety stops, missing tools by name only) and every stage that could run without the backend.
+
+## Execution backends
 
 Choose exactly one per evaluation and record it in the frozen plan:
 
-- **Local harness.** A script on this VM calls the model endpoint(s) and records raw case results in the raw-result contract. Use when the endpoint is reachable reproducibly from here. API credentials come only from an already-connected credential the user approved for this evaluation; never paste secrets into files or logs.
-- **Subagent execution.** Spawn a subagent with the frozen case pack (cases, candidate configs, raw-result contract, safety stops) and have it execute cases and return raw JSON. Same contract applies; the subagent must not see candidate results from other runs or alter the plan.
-- **External authorized runner.** Export the frozen plan and require the stable raw-result contract on return. Use when credentials or production infrastructure must stay outside this VM.
-- **No backend.** Planning, schema validation, and normalization of supplied raw results stay available. A requested run with no authorized backend gets an execution-blocked handoff instead of fabricated results (template: `assets/blocked-template.json`; validator: `scripts/validate_output.py blocked <handoff.json>`).
+- **Local harness.** A script on this VM calls the endpoint(s) and records raw case results in the raw-result contract. Credentials come only from an already-connected credential the user approved for this evaluation; never write secrets into files or logs.
+- **Subagent execution.** A subagent receives the frozen case pack (cases, candidate configs, raw-result contract, safety stops) and returns raw JSON. It must not see other candidates' results or alter the plan.
+- **External authorized runner.** Export the frozen plan and require the raw-result contract on return.
+- **No backend.** Planning, validation, and normalization of supplied results stay available. A requested run gets the blocked handoff instead of fabricated results.
 
-## Pre-Stage Checklists
+## Pre-stage checks
 
-(Run as procedures, not as platform hooks.)
+- **Before planning:** the decision is one sentence with the baseline that remains if the result is inconclusive; candidates are named precisely (model, prompt version, tools, runtime settings); the user confirmed the minimum evidence that would justify replacing the baseline.
+- **Before executing:** the plan is frozen and validated, `plan_ready` is true, the hash is recorded, exactly one backend is authorized, and the safety stops are known.
+- **Before the memo:** results share plan hash, case coverage, and environment. If they do not, the memo is `no-decision`.
 
-**Before planning:**
-- [ ] The deployment decision is stated in one sentence, with the baseline that remains if the evaluation is inconclusive.
-- [ ] Candidate configurations are named precisely (model, prompt version, tools, runtime settings) and are comparable.
-- [ ] The user has confirmed the minimum evidence that would justify replacing the baseline.
+## Companion skills
 
-**Before executing:**
-- [ ] The plan is frozen and validated, `plan_ready` is true, and the plan hash is recorded.
-- [ ] Exactly one execution backend is authorized and named in the plan.
-- [ ] The frozen safety stops are understood (stop on any safety event; stop when candidate coverage or environment conditions diverge).
+All optional; missing companions do not block any stage. `model-prompt-lab` for prompt-focused case design; `data-storytelling-studio` for decision-facing charts from normalized results; `knowledge-work-superpowers` for evidence planning and delivery of the final artifact; `writing-quality` for a shared memo's prose. No remote dataset or job-tracking companion is available; backends are the three above.
 
-**Before writing the decision memo:**
-- [ ] Normalized results are complete and comparable (same plan hash, case coverage, environment).
-- [ ] No partial, incomparable, or unsafe results are being ranked.
-- [ ] If evidence cannot distinguish the candidates, the recommendation is `no-decision` with the additional run that would resolve it.
+## Output contract
 
-## Companion Skills on Hatch
+- Each stage produces a JSON artifact matching its schema (`assets/*-schema.json`; templates in `assets/*-template.json`). Validation is required.
+- Raw results use the raw-result contract in `references/run-guide.md`; normalized runs use `assets/run-schema.json`.
+- Working artifacts are evidence, not deliverables. A memo the user wants to share is also written as a readable document (to `~/workspace/your_files/` or a named folder), backed by the validated memo JSON.
 
-All optional. Missing companions do not block any stage.
+## Operating rules
 
-- **model-prompt-lab:** prompt-focused case design, prompt construction, migration test cases.
-- **data-storytelling-studio:** decision-facing charts and executive readouts from normalized results.
-- **knowledge-work-superpowers:** evidence planning, staged execution, review, and delivery of the final decision artifact.
-- **writing-quality:** final prose validation for a shared memo.
-- A remote dataset/job/run-tracking companion (Hugging Face-style) is **not** available in this workspace. Backend options are the local harness, subagent execution, or an external authorized runner the user names.
-
-## Output Contract
-
-- Each stage produces a JSON artifact matching its schema (`assets/*-schema.json`; templates in `assets/*-template.json`). Validation is required, not optional.
-- Raw results always use the raw-result contract in `references/run-guide.md`; normalized runs use `assets/run-schema.json`.
-- Working artifacts (plans, raw results, normalized runs, routing records, handoffs) live in `~/workspace/evals/<run-id>/` and are treated as evidence, not deliverables.
-- A memo the user wants to share is written as a readable document to `~/workspace/your_files/` (or a goal's `files/` directory when the work serves a goal), backed by the validated `memo` artifact.
-
-## Operating Rules
-
-1. Ask the user for the input the stage needs (decision, candidates, budget, backend authorization). Never invent user-specific details, results, or costs.
-2. Freeze the plan before any candidate result is visible. No post-hoc metrics, no added cases, no plan edits to favor a candidate.
-3. Do not execute a benchmark without a frozen plan. Do not write a selection memo from partial or incomparable normalized results.
-4. Never invent executions, scores, latency, cost, safety outcomes, a selection, or a winner. When execution is blocked, say so and produce the handoff.
-5. Separate measured results from judgment. Report marginal candidate request cost separately from whole-session orchestration usage.
-6. Do not rank candidates with materially different case coverage or runtime conditions. Call small differences meaningless unless the plan defined that threshold.
-7. If a routing prerequisite is missing, set `handoff_ready` to false, name the missing input, and route back to the earliest stage that can create it. Do not guess that an artifact exists.
+1. Never invent executions, scores, latency, cost, safety outcomes, a selection, or a winner.
+2. Freeze the plan before any candidate result is visible. No post-hoc metrics, added cases, or plan edits to favor a candidate.
+3. Do not rank candidates with different case coverage or runtime conditions. Call small differences meaningless unless the plan defined a threshold.
+4. Separate measured results from judgment. Report marginal candidate request cost separately from whole-session orchestration usage.
+5. If a prerequisite is missing, set `handoff_ready` to false, name the missing input, and route back to the earliest stage that can create it.

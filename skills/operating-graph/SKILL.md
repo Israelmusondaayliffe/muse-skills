@@ -1,118 +1,103 @@
 ---
 name: operating-graph
-description: Run bounded, auditable multi-step agent workflows as an explicit operating graph — design typed node/edge topologies, execute with subagent workers and hash-chained runtime records, inspect state, propose and apply bounded topology rewrites, debug failures, and verify outcomes against immutable completion criteria. Invoke only when the user explicitly says to use Operating Graph (e.g. "Use Operating Graph", "Run this as an operating graph"). Do not activate from complexity alone.
+description: Run bounded, auditable multi-step agent workflows as an explicit operating graph. Design typed node/edge topologies, execute with subagent workers and hash-chained runtime records, inspect state, propose and apply bounded topology rewrites, debug failures, and verify outcomes against immutable completion criteria. Invoke only when the user explicitly says to use Operating Graph (e.g. "Use Operating Graph", "Run this as an operating graph"). Do not activate from complexity alone.
 ---
 
 # Operating Graph
 
-A deterministic way to coordinate multi-step, parallel, or high-risk agent work: the goal and authority are immutable, work is split into typed nodes with explicit dependencies and budgets, every runtime change is a hash-chained event, subagent workers run from bounded packets with evidence receipts, and the terminal verdict is verified against the original completion criteria.
+Coordinate multi-step, parallel, or high-risk agent work as a typed graph: the goal and authority are immutable, work is split into nodes with explicit dependencies and budgets, every runtime change is a hash-chained event, workers run from bounded packets with evidence receipts, and the terminal verdict is checked against the original completion criteria.
 
-Ported from the public `operating-graph` plugin (MIT, see LICENSE). Host-neutral engine; this skill is the Hatch mapping.
+Ported from the public `operating-graph` plugin (MIT, see LICENSE). The engine is host-neutral; this skill is the Hatch mapping.
 
-## Roles on this host
+A request is finished when its phase's output exists: a validated graph for design, a `verify` verdict for a run, a read-only report for inspect or debug. Workers stopping is not completion.
 
-- **Authority**: the user (the graph's `human-authority` node). Owns the goal, approvals, and the final decision. Never infer their approval.
-- **Controller**: you, running this skill. Sole writer of runtime records; sole approver of state transitions; the only one who may issue a terminal verdict.
-- **Worker**: a subagent (`subagent` nodes), you directly (`inline`), a shell command / web fetch / connected skill (`tool`), or the user answering a bounded question (`human`).
+## Start here
 
-## Activation (explicit-only)
+1. **Explicit only.** Activate on a direct imperative ("Use Operating Graph", "Run this as an operating graph"). Quoted, negated, conditional, or complexity-only wording does not activate it.
+2. **Fit check.** A graph pays off with dependent steps, independent parallel lanes, separate evaluation, meaningful risk, or human approvals. A single-step task stays inline: say so and do the task without a graph if the user agrees.
+3. **Read the contract.** `references/graph-contract.md` before design; `references/runtime-protocol.md` before touching a run.
+4. **Pick the phase from the request and run its first command** (from this skill's directory):
 
-Activate only on a direct imperative: "Use Operating Graph", "Run this as an operating graph", or an explicit reference to this skill. Quoted, negated, conditional, incidental, complexity-only ("this is complicated"), or generic multi-step wording does **not** activate it.
+| Request | Phase | First command | Writes |
+|---|---|---|---|
+| "design / plan this as a graph" | Design | `python3 scripts/graphctl.py validate <graph.json>` | graph files only |
+| "run it", approved graph | Run | `python3 scripts/graphctl.py init <graph.json> --run-root <dir>` | controller records |
+| "what's the status" | Inspect | `python3 scripts/graphctl.py resume-check <run>` | nothing |
+| "change the topology" | Rewrite | read `references/rewrite-policy.md` | proposal, then apply on approval |
+| "why did it fail" | Debug | `python3 scripts/graphctl.py replay <run>` | nothing |
+| "is it done" | Verify | `python3 scripts/graphctl.py resume-check <run>`, then `verify <run>` | audit events only |
 
-Check fit before designing: a graph helps when work has multiple dependent steps, genuinely independent parallel lanes, separate checking, meaningful risk, or human approvals. A simple task stays on an inline path — do not build a graph around it.
+## Roles
 
-## Workflow phases
+- **Authority**: the user (`human-authority` node). Owns the goal, approvals, and the final decision. Approval is the user saying yes; never infer it.
+- **Controller**: you. Sole writer of runtime records and the only one who issues a terminal verdict.
+- **Worker**: a subagent (`subagent` node), you inline (`inline`), a tool call (`tool`), or the user answering a bounded question (`human`).
 
-Route the request to one phase. Never start a run during design, never mutate during inspection, and never infer approval for material external actions.
+## Design
 
-### 1. Design — topology before execution
+1. Restate the immutable goal: statement, typed deliverables, completion criteria, authority node, approvals, permissions, limits.
+2. Choose the smallest typed node set. Separate authority, controller, production, and independent evaluation. The diamond pattern (planner, parallel specialists, independent skeptic, synthesis, final evaluation, human decision) fits parallel research or drafting.
+3. Draw only real dependencies. Every required deliverable gets an independent evaluator path; every external side-effect node gets an approval predecessor. Feedback loops use a `next_epoch` edge, because the same-epoch projection must be acyclic.
+4. Start from `assets/templates/graph.json` or `assets/templates/diamond-graph.json`; examples in `references/examples/`.
+5. `validate` and fix each violation. Never change authority or weaken criteria to pass. After `init`, `inspect <run> --format mermaid` gives the Mermaid view.
+6. With material external actions, present the graph and get approval before running.
 
-1. Read `references/graph-contract.md`.
-2. Restate the immutable goal: statement, typed deliverables, completion criteria, authority node, approvals, permissions, hard limits.
-3. Choose the smallest sufficient typed node set. Separate authority, controller, production, shared state, and independent evaluation. Prefer the diamond pattern (planner → parallel specialists → independent skeptic → synthesis → final evaluation → human decision) when it fits.
-4. Draw only real dependencies; fan out genuinely independent work in parallel.
-5. Give every required deliverable an independent evaluator path and an approval predecessor for every external side-effect node. Use `next_epoch` for feedback cycles.
-6. Start from `assets/templates/graph.json` (minimal) or `assets/templates/diamond-graph.json` (parallel diamond); examples in `references/examples/`.
-7. Save `graph.json` plus a Mermaid view, then run `python3 scripts/graphctl.py validate <graph.json>` and fix every violation. Never change authority or weaken criteria to make validation pass.
-8. Present the graph and get user approval before running when material external actions exist.
+## Run
 
-Writes design artifacts only. Does not start a run.
+1. `validate`, then `init <graph.json> --run-root <dir>` (runs live under `~/workspace/`).
+2. `ready <run>` and `dispatch-preview <run> --json` show work without mutation. Never downgrade a `subagent` node to inline work.
+3. `prepare-dispatch <run> --json` writes task packets and controller dispatch receipts.
+4. For each ready `subagent` node, spawn a fresh subagent with only the packet path and bounded context. Record the launch exactly as `assets/templates/thread-launch-record.json`, then `record-launch <run> <record.json>`. The worker writes its `NodeReturnPacket` at the packet's `returnPacketPath`.
+5. `ingest-return <run> <packet.json>` per worker; the controller checks hashes, scope, criteria, and artifacts.
+6. Handle `inline`, `tool`, and `human` nodes directly with `transition <run> <node> <status>`, `register-artifact <run> <node> <type> <path>`, and `signal <run> <name> <value>`.
+7. Rewrites only per `references/rewrite-policy.md`; reject stale returns after a graph-version change.
+8. Continue to completion, escalation, cancellation, or a hard limit, then `verify <run>` and report versions, thread evidence, artifacts, unresolved issues, and the exact verdict.
 
-### 2. Run — execute with evidence
+## Inspect, rewrite, debug, verify
 
-Run all commands from this skill's directory. Read `references/runtime-protocol.md` before mutating a run.
+- **Inspect** (read-only): `resume-check`, `status`, `ready`, `inspect --format text` and `--format mermaid`. Report version, epochs, attempts, budgets, node states, launch records, pending approvals, artifacts, bottlenecks.
+- **Rewrite**: smallest proposal using only `add_node`, `update_node`, `disable_node`, `add_edge`, `disable_edge`, `set_priority`, with evidence event IDs, risk, approval need, and rollback version. `propose-rewrite <run> <proposal.json>`, then `apply-rewrite <run> <proposal-id>` only when policy and approvals allow. Never change goal, criteria, authority, permissions, or limits without approval.
+- **Debug** (read-only): `replay`, `resume-check`, `inspect`. Classify the cause as node failure, edge failure, state corruption, policy blockage, or exhausted budget. Propose a repair; do not apply it unless asked.
+- **Verify**: disclose that it writes audit events; `resume-check` first; enumerate every original criterion; check deliverable ownership, hashes, evaluator independence, approvals, and launch evidence for each `subagent` node; `verify <run>`. Return exactly `pass`, `conditional-pass`, or `fail` with criterion-level evidence.
 
-1. `validate`, then `init <graph.json> --run-root <dir>` (keep runs under `~/workspace/`).
-2. `dispatch-preview <run-dir> --json` to see parallel work without mutation. Never silently downgrade a `subagent` node to inline work.
-3. `prepare-dispatch <run-dir> --json` → task packets + controller-owned dispatch receipts.
-4. For each ready `subagent` node, spawn a **fresh subagent**: no parent transcript, only the task packet path and bounded context. Record the launch exactly as `assets/templates/thread-launch-record.json` (request: `"tool": "subagent.spawn"`, `"threadMode": "fresh"`; response: `agentId`, success flag, timestamps), then `record-launch <run-dir> <record.json>`. The subagent must write its `NodeReturnPacket` at the packet's `returnPacketPath` before its result is ingested.
-5. `ingest-return <run-dir> <return-packet.json>` per completed worker; the controller validates hashes, scope, criteria, and artifacts, and registers valid artifacts.
-6. Handle `inline`, `tool`, and `human` nodes directly; use `transition`, `register-artifact`, and `signal` for explicit state changes, artifacts, and observed events.
-7. Evaluate rewrite triggers only per `references/rewrite-policy.md`. Reject stale returns after a graph-version change.
-8. Continue to completion, escalation, cancellation, or a hard limit. `resume-check <run-dir>` before resuming an interrupted run.
-9. Finish with `verify <run-dir>` and report graph versions, thread evidence, artifacts, unresolved issues, and the exact verdict.
+## Worked example (illustrative, synthetic)
 
-Stop automatic execution on event-chain corruption, missing thread evidence, stale packets, unavailable required models, unsafe scope, or exhausted limits. Do not synthesize approvals, exceed budgets, or let workers edit controller-owned files.
+Request: "Use Operating Graph. Validate this FAQ graph and fix what validation reports."
 
-### 3. Inspect — read-only
+- `validate faq-graph.json` exits 2: `OGI-13` same-epoch cycle between `builder` and `independent-evaluator`; `OGI-14` the cycle lacks a `next_epoch` edge.
+- Judgment: the evaluator-to-builder edge is a real revision loop the user wants. Deleting it would pass validation but drop the revision path. Change that edge's `temporal` to `next_epoch`, so a revision happens in epoch 2, bounded by `limits.maxEpochs`. Goal, criteria, and limits stay byte-identical.
+- `validate` prints `Graph valid: tidewater-faq`. `init` creates `run-tidewater-faq/`; `ready` prints `Ready nodes: human-authority`, which is right: nothing runs before the authority node.
 
-1. `resume-check <run-dir>` (validates replay + integrity).
-2. `status <run-dir>`, `ready <run-dir>`, then `inspect <run-dir> --format text` and `--format mermaid`.
-3. Report version, epochs, attempts, budgets, node states, thread launch records, pending approvals, artifact lineage, rewrites, bottlenecks, unsatisfied dependencies.
+A wrong version would delete the feedback edge, raise `maxEpochs` without being asked, or dispatch before the user approved running.
 
-Remain read-only: no transitions, no artifact registration, no rewrites, no repairs. If the event chain is broken, stop and move to Debug.
+## When something goes wrong
 
-### 4. Rewrite — smallest bounded topology change
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| `validate` exits 2 with `violated rule` | Bad kind, cycle, missing evaluator or approval edge | Fix the named element; re-validate | the fix would change goal, authority, or criteria: ask |
+| `resume-check` not resumable | Broken event chain or version mismatch | Treat as corruption; switch to Debug | always stop automatic execution |
+| `ingest-return` rejects a packet | Stale graph version, scope breach, missing artifact | Re-dispatch the node once from a fresh packet within its attempt budget | attempts exhausted: mark blocked |
+| Subagent spawn unavailable | Host capability | Report the node as blocked; never run it inline instead | a critical node cannot run |
+| `ready` shows only human nodes | Waiting on the user's decision | Ask the bounded question the node defines | no answer: run stays waiting |
+| Limit reached (`maxNodeRuns`, `maxEpochs`) | Budget exhausted | Stop; report state and the smallest next action | always; do not raise limits yourself |
 
-1. Read `references/rewrite-policy.md`. Diagnose the topology failure from triggering events.
-2. Draft the smallest proposal using only `add_node`, `update_node`, `disable_node`, `add_edge`, `disable_edge`, `set_priority`. State evidence event IDs, predicted benefit, regressions, risk level, approval requirement, rollback version.
-3. On user request to persist: `propose-rewrite <run-dir> <proposal.json>`.
-4. Apply only when policy permits and every required approval exists: `apply-rewrite <run-dir> <proposal-id>`. Confirm with `status` and `validate <run-dir>/graph.json`.
+## Completion
 
-Never change the goal, criteria, authority, permissions, approval boundaries, or hard limits without required approval. Preserve all prior graph versions.
-
-### 5. Debug — read-only diagnosis
-
-1. `replay <run-dir>`, `resume-check <run-dir>`, `inspect` (text + mermaid).
-2. Reconstruct transitions and version changes from hash-chained events. Check missing/corrupt/invalidated/misowned artifacts. Detect same-epoch deadlocks, impossible dependencies, illegal transitions, policy blockage, exhausted budgets.
-3. Classify the primary cause: node failure, edge failure, state corruption, policy blockage, or exhausted budget. Produce a bounded repair proposal **without applying it** unless the user explicitly requests a separate repair workflow.
-
-A broken event chain or version mismatch is corruption: stop automatic execution.
-
-### 6. Verify — terminal judgment
-
-1. Disclose up front that verification writes controller-owned audit events.
-2. `resume-check <run-dir>` first — stop if integrity fails.
-3. Return to the immutable original goal; enumerate every completion criterion.
-4. Verify deliverable existence, ownership, hash integrity, evidence provenance; each required deliverable has an independent evaluator and no node evaluated or approved its own output.
-5. Check unresolved failed/blocked critical nodes, required approvals, prohibited mutations. For each executed `subagent` node: dispatch receipt, launch receipt, fresh-thread launch, matching agent identity, bounded return, graph-version binding.
-6. `verify <run-dir>`. Return exactly `pass`, `conditional-pass`, or `fail` with criterion-level evidence and unresolved issues.
-
-A worker return is evidence, not acceptance. Never repair evidence or relax criteria during verification. Read-only with respect to topology and worker output.
-
-## Controller checklists
-
-Before each run session (a resumed run or a fresh long run): `resume-check` the run, re-read `status`, confirm no pending approvals you are about to bypass, and confirm worker slots before `prepare-dispatch`.
-
-Before a `subagent` launch: packet prepared and receipt anchored; launch record fields match the template exactly (`subagent.spawn` / `fresh`); the subagent task states its allowed write roots and the authority prohibitions (no spawning, no approving, no integrating, no controller-state writes, no answering the user, no terminal verdict).
-
-Before a terminal verdict: every completion criterion evidenced, every required deliverable evaluator-independent, no unresolved failed/blocked critical nodes, approvals on record.
-
-## Output contract
-
-- Design → validated `graph.json` + Mermaid view + summary; no run started.
-- Run → live run directory, `verify` result, verdict report with versions, thread evidence, artifacts, unresolved issues.
-- Inspect → read-only status report; no mutations.
-- Rewrite → proposal file (+ applied version on approval) with risk and rollback.
-- Debug → classified root cause + bounded repair proposal; no automatic repairs.
-- Verify → `pass` / `conditional-pass` / `fail` with criterion-level evidence.
+- Design: validated `graph.json`, Mermaid view, short summary. No run started.
+- Run: `verify` result with criterion-level evidence and unresolved issues. `conditional-pass` names each condition.
+- Inspect and debug: read-only report; debug adds a classified cause and an unapplied repair proposal.
+- Blocked: name the node, the cause, and what the user must decide.
 
 ## Operating rules
 
-1. Controller-only runtime writes; workers touch only their `node-runs/<id>/attempt-<n>/worker/` and `artifacts/<id>/` roots. Write roots are an authority boundary — subagent threads share this VM's filesystem, so do not claim OS-level confinement.
-2. No synthesized approvals. Approval = the user explicitly saying yes. Every external side-effect node needs an approval predecessor.
-3. Never downgrade a `subagent` node to inline execution. Never rerun a succeeded node silently. Never mark a run complete because workers stopped.
-4. Run directories live under `~/workspace/`; artifacts never leave the run directory; paths in records are run-relative.
-5. Do not invent user-specific data (writing samples, business details, names, credentials). Design nodes that need personal input as `human` nodes and ask the user when reached.
-6. Ask rather than assume on consequential actions; this skill is explicit-only end to end.
-7. Engine scripts run locally with no network access; `python3 -m py_compile scripts/*.py scripts/graph_engine/*.py` after any script change.
+1. Controller-only runtime writes. Workers write only their `node-runs/<id>/attempt-<n>/worker/` and `artifacts/<id>/` roots. Subagents share this machine's filesystem, so write roots are an authority rule, not OS confinement.
+2. No synthesized approvals. Never rerun a succeeded node silently.
+3. Records use run-relative paths; artifacts stay in the run directory.
+4. Do not invent user data (samples, business details, credentials). Model those needs as `human` nodes.
+5. Scripts run locally without network. After any script change: `python3 -m py_compile scripts/*.py scripts/graph_engine/*.py`.
+
+## Resources
+
+- `scripts/graphctl.py`: `validate`, `init`, `status`, `ready`, `dispatch-preview`, `prepare-dispatch`, `record-launch`, `ingest-return`, `transition`, `register-artifact`, `signal`, `propose-rewrite`, `apply-rewrite`, `verify`, `inspect`, `replay`, `resume-check`. Engine in `scripts/graph_engine/`.
+- `references/`: `graph-contract.md`, `runtime-protocol.md`, `node-packet.md`, `rewrite-policy.md`, and `references/examples/`.
+- `assets/templates/`: `graph.json`, `diamond-graph.json`, `node-task-packet.json`, `node-return-packet.json`, `thread-launch-record.json`, `policies.json`.

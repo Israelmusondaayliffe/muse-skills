@@ -43,7 +43,7 @@ Bold for key terms, ALL CAPS for strong points, or structural emphasis (short pa
 
 ## Voice profile template
 
-Write the calibrated profile to `references/voice-profile.md`:
+Write the profile to a scratch file, then store it with `python3 bin/voice_state.py save <scratch-file>`. It lands at `~/workspace/writing-quality/voice-profile.md`, outside the skill package, and any earlier profile is kept as a dated backup. Never write the profile into this skill folder.
 
 ```
 VOICE PROFILE
@@ -69,7 +69,11 @@ BANNED (from user preferences):
 Voice notes: [anything distinctive that doesn't fit above]
 ```
 
-Keep it readable and user-editable. When the user states a style preference in conversation, update this file.
+Keep it readable and user-editable. When the user states a lasting style preference in conversation, update the stored profile the same way (edit a scratch copy, then `save`).
+
+## When calibration is not needed
+
+Calibration is for writing new prose in the user's own voice. Skip it for neutral work: tightening, proofreading, clarity edits, restructuring, or de-slopping text the user supplied. The supplied text is the voice source for those tasks. Keep its register, and do not add personality it lacks.
 
 ## Generic clarity profile (fallback)
 

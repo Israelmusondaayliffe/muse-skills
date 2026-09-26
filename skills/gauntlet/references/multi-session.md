@@ -6,9 +6,9 @@ The full protocol for runs that span sessions, threads, and surfaces. A run must
 
 Run read mode of `gauntlet-handoff`: `CONTEXT.md` first, then the newest `HANDOFF.md`, then `run.json`, `PLAN.md`, `pieces.json`, `lanes.json`.
 
-Check the lock before claiming anything. A lock is stale when its heartbeat is older than two hours or its holder session is marked exited in `sessions.json`. A stale lock may be reclaimed via `lock.py`; a live lock may not be overridden, ever. Two sessions in one lane is the fastest way to lose a day of Max-effort compute.
+Check the lock before claiming anything. A lock is stale when its heartbeat is older than two hours or its holder session is marked exited in `sessions.json`. A stale lock may be reclaimed via `lock.py`; a live lock may not be overridden, ever. Two sessions in one lane waste the approved budget on conflicting work.
 
-Then claim the lane, write a `sessions.json` entry (index, surface, model, effort, lane, entry time), and restate the contract in one line before doing any work: the goal, the bar, and the lane claimed. If disk state and anything remembered from conversation disagree, disk wins and the discrepancy is surfaced to the user.
+Then claim the lane, write a `sessions.json` entry (index, surface, model, effort, lane, and `entered` as an ISO 8601 UTC timestamp; `check_stops.py` measures the wall clock from it and pauses the run if it cannot parse it), and restate the contract in one line before doing any work: the goal, the bar, and the lane claimed. If disk state and anything remembered from conversation disagree, disk wins and the discrepancy is surfaced to the user.
 
 ## During a session
 

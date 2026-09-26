@@ -22,7 +22,7 @@ Examples:
 4. For each slice, state its outcome, proof surface, acceptance checks, blockers, and boundaries.
 5. Size each slice so a fresh context can understand, execute, and prove it from the brief plus the slice alone. If it cannot, split it or prepare the durable handoff (see the skill's handoff template).
 6. Add enabling work only when it is required for a complete slice. Prefer small preparation inside the slice that needs it.
-7. Present the proposed breakdown for a granularity and dependency check before assigning work or creating external tickets.
+7. Present the proposed breakdown for a granularity and dependency check before assigning work to other people or creating external tickets. When the user already asked you to slice and execute locally, show the breakdown in the same reply and continue.
 8. Use `assets/action-slices-template.json` for a machine-checkable local plan.
 9. Validate a local plan from this skill's directory:
 
@@ -34,7 +34,7 @@ python3 scripts/validate_action_slices.py PATH
 
 ## Durable slice handoff
 
-If the `continuity_vault` skill is installed, it can own a durable cross-task or delegated-slice handoff. Otherwise write a self-contained handoff artifact using `assets/handoff-template.md` inside the user-approved output root. Include the outcome, source artifact paths, settled decisions, open questions, scope boundaries, slice ID and acceptance checks, blockers and dependencies, proof and verification state, and exact next action. Do not rely on conversation history. If the user has not approved an output root, ask for one before writing the handoff.
+If the optional `continuity-vault` skill is installed, it can own a durable cross-task or delegated-slice handoff. Otherwise write a self-contained handoff artifact using `assets/handoff-template.md` inside the user-approved output root. Include the outcome, source artifact paths, settled decisions, open questions, scope boundaries, slice ID and acceptance checks, blockers and dependencies, proof and verification state, and exact next action. Do not rely on conversation history. If the user has not approved an output root, ask for one before writing the handoff.
 
 ## Wide-change exception
 

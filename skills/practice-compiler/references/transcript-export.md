@@ -2,7 +2,8 @@
 
 The scanner reads JSONL event streams; Muse's work traces live in the app
 database, so this skill exports a bounded window into normalized JSONL before
-scanning. Exports live under `hidden_files/session-exports/<YYYY-MM-DD>_<YYYY-MM-DD>/`
+scanning. Exports live under `~/workspace/practice-compiler/session-exports/<YYYY-MM-DD>_<YYYY-MM-DD>/`,
+outside the replaceable skill folder (older exports may still sit in the package's `hidden_files/session-exports/`),
 and are never attached to handoffs or shown beyond redacted snippets.
 
 ## Steps
@@ -107,7 +108,7 @@ Failure, for outputs with an error status or nonzero exit:
 - Private model reasoning is not readable through these tables; do not try to
   export it, and do not quote it from elsewhere into the export.
 - The scanner redacts emails, API-key shapes, and secrets when writing
-  signals; exports themselves stay inside `hidden_files/` on this machine.
+  signals; exports themselves stay under `~/workspace/practice-compiler/` on this machine.
 - Source classes (`user`, `automation`, `subagent`, `synthetic`) are labeled
   at export time via `thread_source`; the scan's `--source-class` flag filters
   them. Include non-user classes only when the user selects them.

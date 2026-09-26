@@ -5,6 +5,8 @@ Scans skill roots for */SKILL.md, records exact paths, SHA-256 fingerprints,
 and frontmatter name/description. Read-only: it never modifies skills.
 """
 
+from __future__ import annotations
+
 import argparse
 import hashlib
 import json

@@ -37,7 +37,8 @@ never a table.
 
 Concept-first: message → arc → beats → technique per beat → brand accents
 pass last. Write `STORYBOARD.md` + `SCRIPT.md`; present the beat-by-beat
-summary and iterate until the user approves.
+summary with the work. Wait for approval only when the user asked to
+review the plan first or key product facts are missing.
 
 ## Step 4 — Voiceover and timing
 
@@ -54,8 +55,8 @@ against `DESIGN.md` and `STORYBOARD.md` before rendering.
 
 ## Step 6 — Validate and deliver
 
-`bin/inspect_delivery.py` + references/delivery-qc.md. Render MP4 only on
-explicit request. At handoff, include an honest "What I did NOT verify"
+`bin/inspect_delivery.py` + references/delivery-qc.md. Render the MP4 when
+the user asked for a video. At handoff, include an honest "What I did NOT verify"
 section when anything was skipped — verification gates are never skipped
 in autonomous mode, only user-preference questions are.
 

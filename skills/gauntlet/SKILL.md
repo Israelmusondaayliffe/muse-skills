@@ -1,133 +1,109 @@
 ---
 name: "gauntlet"
-description: "Run the gauntlet: a heavyweight builder-vs-blind-critic loop for mega projects that justify real cost. Use only when the user explicitly says gauntlet, run the gauntlet, gauntlet loop, gauntlet mode, beat this bar, blind critic loop, resume the gauntlet, or gauntlet handoff. Turns a goal into a script-validated brief with an external bar, loops builders against blind critics until the work wins or stops, verifies with independent agents, and reports with re-runnable evidence. Never load for ordinary tasks, quick edits, or 'make this really good'."
+description: "Run the artifact gauntlet: a builder-vs-blind-critic loop that makes an artifact beat an external, inspectable bar, then verifies with agents that never saw the build. Use only when the user explicitly asks for the gauntlet by name for artifact work: run the gauntlet on this artifact, gauntlet run, gauntlet mode, beat this bar, blind critic loop, resume the gauntlet, gauntlet handoff. A bare 'run the gauntlet' with no existing state gets one question choosing between this skill and gauntlet-loop (governed multi-workstream projects). Never load for ordinary tasks, quick edits, or 'make this really good'."
 metadata: { "includeInPrompt": true }
 ---
 
 # Gauntlet
 
-Explicit-only mega-project loop: split a goal into the smallest independently judgeable pieces, give each piece a builder and a blind critic with fresh context, judge against an external bar, name one gap per round, loop until the work wins or the run stops, verify with agents that never saw the build, and report with receipts.
+Make an artifact beat an external bar. Split the goal into the smallest independently judgeable pieces; each piece gets a builder and a blind critic with fresh context, judged against the bar, one gap per round, until it wins or a stop fires. Agents that never saw the build verify; scripts write the report from state.
 
-Adapted from the Community Agent Plugins `gauntlet` plugin (method source: Matt Shumer, "How to Run a Gauntlet Loop"). Manifest/agent formats from the plugin do not transfer; what transfers is the method, the state layout, and the 17 validation scripts in `scripts/`.
+Adapted from the Community Agent Plugins `gauntlet` plugin (method source: Matt Shumer, "How to Run a Gauntlet Loop"). What transfers is the method, the state layout, and the 17 scripts in `scripts/`.
 
-## Operating rules
+A gauntlet run is finished only when a verified consensus exists and `build_report.py` wrote `EVIDENCE.md` from state. A brief, a converged piece, a capped piece, or a paused run is progress, not done.
 
-1. **Explicit only.** If the user says "make this really good" or "push it to the limit" without naming the gauntlet, do not proceed and do not initialize state. Point out the gauntlet exists and must be invoked by name. No confirmation, no run.
-2. **The seven invariants win every conflict:**
-   - The bar is external and inspectable (INV-1). Never a self-authored mid-run rubric, never prose adjectives.
-   - The builder never grades itself (INV-2). Critics and verifiers run in fresh context with no builder history; enforced by spawning discipline and validated by `round_record.py`.
-   - Judgment inspects the real thing (INV-3): rendered pixels, running processes, actual test output, full text read end to end. Never a description.
-   - Quality and integrity are judged separately, by different verifiers (INV-4).
-   - Nothing is done without re-runnable evidence (INV-5). Absence of evidence is reported as absence, never a pass.
-   - Continuity is written from state by script, not narrated (INV-6).
-   - Caps pause, they do not certify (INV-7). A capped piece is `capped`, never `done`.
-3. **Scripts decide.** Where a step names a script, its output is binding; do not override it by hand. Never hand-edit a verdict, consensus, or report value into passing.
-4. **Never simulate the loop.** No faked rounds, no imagined critics, no "as a critic I would say" stand-ins. If the surface cannot run it, say so and offer brief-only mode.
-5. **The router never reports completion.** Completion claims come only from the evidence stage reading verified consensus from disk. The router never skips verification to reach the report.
+## Start here
 
-## Tooling
+1. **Is this the gauntlet, and which one?** Follow `references/routing.md`. Existing `<root>/.gauntlet/runs/*/run.json` means this skill; `<root>/.gauntlet/state.json` means gauntlet-loop. With no state, a bar to beat or a blind comparison means this skill; workstreams or a governed plan mean gauntlet-loop. A bare "run the gauntlet" gets one choice question and nothing is initialized. "Make this really good" without the name is not a gauntlet request.
+2. **Read state before acting.** Find an existing run under `.gauntlet/runs/` (match slug and `goal_one_line`). Never create a second run for a goal that has one. State files win over conversation memory.
+3. **Precheck.** `python3 scripts/precheck.py --surface hatch`. It reports `subagents: "unknown"` on every host except chat, because a host name is not proof of clean context. So on Muse expect `degraded`: tell the user once that critic isolation is unconfirmed, record `"context_isolation": "degraded"` in `run.json`, and carry the banner into every handoff and report. `unsupported` means brief-only mode.
+4. **Budget gate (a real resource gate).** `init_run.py` writes a small envelope: 2 rounds per piece, 1 wave, 0.5 hours per session, 6 launches, cost ceiling 0 (no metered spend), `approved: false`. State it in plain numbers with anything the brief needs beyond it, ask once, and record the answer in `run.json` budgets (`approved: true`, `approval_ref` pointing at the decision recorded in `CONTEXT.md`). Until then `check_stops.py` pauses the run as `budget-unverified`. If the user already stated an envelope in this request, record it; do not ask again.
 
-All scripts live in `scripts/` and run with `python3 scripts/<name>.py --run-dir <run-dir>`. They are pure stdlib, covered by the upstream test suite (172 tests, all passing at port time), and safe: they only read and write files under the run directory, plus reachability probes in `claim_audit.py` (`--skip-network` available) and `precheck.py`.
+| State on disk | Next stage | First command |
+|---|---|---|
+| No run for this goal | Brief | `python3 scripts/init_run.py --root <project> --slug <slug> --goal "<one line>" --domain <domain> --shape S1` |
+| Precheck `unsupported` | Brief-only mode, then stop | Produce `CONTEXT.md`, `PLAN.md`, `bar/`, `prompt.md`; hand over the prompt |
+| Brief exists, no `prompt.md` | Prompt | `python3 scripts/lint_prompt.py <run>/prompt.md --domain <domain>` |
+| Budgets not approved | Budget gate (step 4) | `python3 scripts/check_stops.py --run-dir <run>` |
+| `prompt.md` exists, status not `running` | Run | `python3 scripts/check_stops.py --run-dir <run> --next-launches 2` |
+| "resume", new session, stale `run.lock` | Handoff read, then run | read `CONTEXT.md`, newest `HANDOFF.md`, `run.json` |
+| `stopped` or `converged`, no consensus | Verify | `python3 scripts/hash_plan.py --run-dir <run> --check` |
+| Consensus `verified` or `verified-with-dissent` | Evidence | `python3 scripts/hash_artifacts.py --run-dir <run>` |
+| Consensus `failed` or `unverifiable` | Run, with verifier gaps as work | `check_stops.py` against the remaining envelope |
 
-| Script | Job |
-|---|---|
-| `precheck.py` | Surface capability check. Run with `--surface hatch`; returns `full` / `degraded` / `unsupported` as JSON |
-| `init_run.py` | Create `.gauntlet/runs/<YYYYMMDD-HHMM-slug>/` and the sealed directory |
-| `validate_bar.py` | Gate the bar (external, inspectable, resolvable refs) |
-| `brief_complete.py` | Gate the 11 brief fields |
-| `validate_pieces.py` | Enforce the inspection closed set and lane ownership |
-| `hash_plan.py` | Freeze (`--record`) and re-check (`--check`) success criteria and rubric hashes |
-| `lint_prompt.py` | Lint `prompt.md` (under 600 words, 9 required clauses, no architecture prescription) |
-| `lock.py` | Lane lock acquire / heartbeat / release / status |
-| `blind_pair.py` | Neutral A/B copies plus a sealed label map outside `runs/` |
-| `round_record.py` | Validate and atomically record a critic verdict (enforces INV-2) |
-| `check_stops.py` | Evaluate every stop condition; first to fire wins |
-| `claim_audit.py` | Audit the claim ledger for a piece |
-| `consensus.py` | Compute verification consensus — the only author of `consensus.json` |
-| `hash_artifacts.py` | SHA-256 every artifact file at report time |
-| `build_report.py` | Assemble `EVIDENCE.md` and `EVIDENCE.json` entirely from state |
-| `render_workbench.py` | Regenerate `workbench.html` from state after every round |
-| `write_handoff.py` | Generate the script-written session handoff (`--run-dir`, `--session N`, optional `--exit-reason`, `--rounds`, `--subagents`) |
+Full routing, degraded, and unsupported behavior: `references/routing.md`.
 
-Subagent role briefs for spawned children live in `agents/`: `builder.md`, `critic.md`, `reader-proxy.md`, `quality-verifier.md`, `integrity-verifier.md`, `smoother.md`. Paste the brief into the child's spawn message; the child's entire context is that brief plus the file paths it may read. See `references/hatch-mechanics.md` for how fresh-context spawning works on Hatch.
+## The seven invariants (they win every conflict)
 
-## Workflow
+1. The bar is external and inspectable (INV-1): files, commands, or measurements, never adjectives or a mid-run rubric.
+2. The builder never grades itself (INV-2). Critics and verifiers get file-only briefs; `round_record.py` rejects a verdict that is not recorded as `files-only`.
+3. Judgment inspects the real thing (INV-3): rendered pixels, test output, the full text.
+4. Quality and integrity are judged separately (INV-4).
+5. Nothing is done without re-runnable evidence (INV-5). Missing evidence is reported as missing.
+6. Continuity is written from state by script (INV-6).
+7. Caps pause, they do not certify (INV-7). A capped piece is `capped`, never `done`.
 
-### Stage 0 — Precheck (router first)
+Scripts decide where a step names one. Never hand-edit a verdict, consensus, or report value. Never simulate the loop: no narrated rounds, no imagined critics.
 
-Read run state from disk before routing: run directory under `.gauntlet/runs/` in the project root (match run ID slug and `goal_one_line`; never create a second run for a goal that has one). Then run `precheck.py --surface hatch` and record the result in `run.json`.
+## Stages
 
-- `full`: proceed.
-- `degraded`: name the missing capability and its cost, get the user's go-ahead, record `"context_isolation": "degraded"` or `"execution": "degraded"` in `run.json`; every handoff and report carries the banner.
-- `unsupported`: refuse the loop. Offer brief-only mode (stages 1–2), produce `CONTEXT.md`, `PLAN.md`, `bar/`, `prompt.md`, and hand the user a portable prompt.
+**1. Brief.** Explore before asking. Interview one question at a time only for what changes the run: bar, success criteria, budget, scope. Pick one adapter from `references/domains/` (`code`, `visual`, `prose`, `research`, `deck`, `strategy`, `prompt-system`, `brand`). Write `bar/bar.md` with real refs in `bar/refs/` and gate it with `validate_bar.py` (`references/choosing-a-bar.md`). Gate the 11 fields with `brief_complete.py`. Size: S1 (up to 10 pieces, one session), S2 (sequential sessions), S3 (parallel lanes with locks). Then `init_run.py`, `CONTEXT.md` and `PLAN.md` from `assets/`, `hash_plan.py --record`, `validate_pieces.py`.
 
-### Routing (first match wins)
+**2. Prompt.** Fill `assets/prompt-template.md`, keep it under 400 words, lint with `lint_prompt.py` (a failed lint blocks), check `references/prompt-antipatterns.md`, show the prompt in one fenced block.
 
-| Signal | Route |
-|---|---|
-| No run directory for this goal | Precheck, then brief |
-| Precheck `unsupported` | Brief-only mode, then stop |
-| Brief exists, no `prompt.md` | Prompt stage |
-| `prompt.md` exists, status not `running` | Run stage |
-| "resume", new session, or stale `run.lock` | Handoff read mode, then run stage |
-| Session ending, or "hand this off" | Handoff write mode |
-| Status `stopped` or `converged`, no consensus | Verify stage |
-| Consensus `verified` or `verified-with-dissent` | Evidence stage |
-| Consensus `failed` or `unverifiable` | Run stage with verifier gaps as new work |
-| "Is it actually done" | Verify stage, never the report first |
+**3. Run.** Per round, per eligible piece:
+1. `check_stops.py --run-dir <run> --next-launches N --next-cost C` with the launches and verified maximum metered cost you are about to spend. A fired stop means do not dispatch.
+2. Builder in fresh context (`agents/builder.md`, goal, bar refs, piece, artifact path, last `gap.md`). Record the launch in `cost.json` (`subagents_total`, `cost_spent`) as it happens.
+3. Inspect with every declared method; record `inspection_command` rows. Nothing produced means the round fails; no critic for a broken artifact.
+4. `blind_pair.py`, then the critic in fresh context (`agents/critic.md`, neutral A/B outputs only). Record with `round_record.py`.
+5. Lost: write `gap.md`, loop. Won: two consecutive wins converge the piece.
+6. `render_workbench.py`, `check_stops.py`, lock heartbeat, state to disk.
 
-Full routing detail, run discovery, and degraded/unsupported behavior: `references/routing.md`.
+Wave boundary: merge, run the smoother (`agents/smoother.md`), `references/parallelism-and-locks.md`. Stops in order: user `STOP` file, budget unverified or proposed usage over the envelope, convergence, round cap (piece cap clamped to the run cap), no-gain, wave cap, wall clock (from the open session's `entered` timestamp), launch cap, cost ceiling. These are cooperative gates over records you keep; they cannot see an unrecorded launch or cap account-wide spend, so record every launch.
 
-### Stage 1 — Brief
+**4. Verify.** Only on `stopped` or `converged` runs without consensus. `hash_plan.py --check` first (mismatch means `cannot-verify`). Spawn quality and integrity verifiers with file-only briefs (`agents/quality-verifier.md`, `agents/integrity-verifier.md`), within the approved launch cap. `consensus.py` is the only author of `consensus.json`. Spawning discipline: `references/verification-independence.md`.
 
-Turn the goal into a decision-complete, script-validated run definition. Explore before asking (conversation, repo, files — never ask for what is discoverable). Interview in one-question turns (tappable options for closed answers) until decision-complete; the ordinary ask-sparingly budget does not apply here.
+**5. Evidence.** Only after `verified` or `verified-with-dissent`: `hash_artifacts.py`, then `build_report.py`. Every number comes from state; missing values print `not recorded`.
 
-1. Pick exactly one domain adapter from `references/domains/`: `code`, `visual`, `prose`, `research`, `deck`, `strategy`, `prompt-system`, `brand`. Mixed projects declare a primary plus per-piece overrides. The adapter defines what a piece is, what the bar looks like, how the artifact is inspected, whether blinding is feasible, and what integrity checks.
-2. Set the bar in `bar/bar.md` (what, why fair, how inspected) with real refs in `bar/refs/`. Gate with `validate_bar.py`. A failed bar blocks the stage — fix the bar or interview for a better one. Bar-setting guidance: `references/choosing-a-bar.md`.
-3. Gate completeness with `brief_complete.py` (11 fields: goal_one_line, 3–7 independently checkable success_criteria, bar_definition, bar_rationale, done_means from `blind win | measured threshold | user judgment`, domain_primary, execution_shape S1|S2|S3, budget_ceiling, out_of_scope, non_negotiables, inspection_feasibility).
-4. Size it: S1 (≤10 pieces, one session, one lane), S2 (sequential multi-session, default), S3 (parallel lanes, disjoint artifact paths, lane locks).
-5. Propose provisional pieces (id, domain, lane, wave, artifact paths, inspection methods, bar refs, blind feasibility, acceptance, verifier counts). Success criteria are copied verbatim from `PLAN.md` into each piece's `acceptance`.
-6. `init_run.py` → write `CONTEXT.md` and `PLAN.md` (templates in `assets/`) → `hash_plan.py --record` → `validate_pieces.py`. Set status `briefed`. `CONTEXT.md` is append-only (corrections appended with date and reason); `PLAN.md` is versioned per wave.
+**6. Handoff.** `write_handoff.py --run-dir <run> --session <n> --exit-reason "<reason>"`, one optional `## Judgment notes (unverified)` section, release the lock. Read mode reads state in the order in `references/multi-session.md` and writes a `sessions.json` entry with an ISO `entered` timestamp.
 
-### Stage 2 — Prompt
+## Worked example (illustrative, synthetic)
 
-Fill `assets/prompt-template.md` from `run.json`, `PLAN.md`, `bar/bar.md`. Keep it under 400 words (warn above 400, fail above 600); no architecture, no fixed round counts. Check anti-patterns: `references/prompt-antipatterns.md`. Lint with `lint_prompt.py` — a failed lint blocks the stage. Write `prompt.md`, set status `prompted`, surface the prompt to the user in one fenced code block.
+Request: "Run the gauntlet on the Tidewater tagline; beat these three reference taglines." No run exists.
 
-### Stage 3 — Run (the loop)
+- Routing: a bar to beat, so this skill. No choice question needed.
+- Precheck: `degraded`, `subagents: "unknown"`. Tell the user critic isolation is unconfirmed on this host; record `context_isolation: degraded`.
+- Init: `python3 scripts/init_run.py --root ~/workspace/tidewater --slug tidewater-tagline --goal "Tidewater tagline that beats the bar" --domain prose --shape S1`.
+- Budget: `check_stops.py --run-dir <run> --next-launches 2` returns `budget-unverified`. Say: "This run can use 2 critic rounds for 1 piece, 6 launches total, 30 minutes, no metered spend. One round is a builder plus a critic. Approve that envelope?" After "yes", set `approved: true`, `approval_ref: "CONTEXT.md 2026-09-25 user approved envelope"`, status `running`.
+- Judgment: one piece, not three. A tagline is one judgeable unit, and splitting it would spend launches on fragments no critic can compare against a whole reference.
+- Round 1 loses (gap: "does not name kayakers"). Round 2 wins. The round cap of 2 fires before a second consecutive win, so the piece is `capped`. Report "capped after 2 rounds, 1 win, last gap preserved", and offer one more round only with a new approval. Not done.
 
-Preconditions: run directory, `prompt.md`, validated bar. You are the lead: orchestrate, builders build, critics judge, scripts decide.
+A wrong version would launch critics before approval, record `context_isolation: clean` because the host is Hatch, or call the capped piece finished.
 
-Per round, per eligible piece (status `looping`, under caps, in this wave, your lane):
+## When something goes wrong
 
-1. **Builder**, fresh context via `subagent.spawn` with `agents/builder.md` plus goal, bar refs, piece definition, artifact path, last `gap.md`. Not given: critic reasoning, other pieces, own prior rationale. It edits the real artifact; you snapshot to `rounds/<piece>/<n>/artifact/`.
-2. **Inspect.** Run every declared inspection method; for `inspection_command`s record `{"command", "exit_code", "ran_at"}` rows in `rounds/<piece>/<n>/inspection/results.json`. Knowledge-work pieces get the reader-proxy child (`agents/reader-proxy.md`, mechanism in `references/reader-proxy.md`) and `claim_audit.py`. If inspection fails or produces nothing, the round FAILS — send it back as the gap, spawn no critic. Never judge a broken artifact.
-3. **Blind pair** with `blind_pair.py` (skip where `blind_feasible` is false; judge against the frozen rubric instead).
-4. **Critic**, fresh context via `subagent.spawn` with `agents/critic.md` plus goal, bar description, neutral A/B inspection outputs, acceptance criterion. Not given: which is ours, builder history, prior verdicts, the sealed map.
-5. **Record** with `round_record.py`. You assert `critic_saw_builder_context: false`, `critic_context_source: "files-only"`; a rejected verdict is a failed round. You unseal the map and write `winner_is_ours` after validation.
-6. **Win/loss.** Ours lost: write `gap.md`, reset `consecutive_wins`, loop. Ours won: increment; two consecutive wins converge the piece (`converged`).
-7. **Every round:** `render_workbench.py`, `check_stops.py`, lock heartbeat, write all state to disk (a session that dies must lose at most one round).
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| `check_stops` fires `budget-unverified` | No recorded approval, non-numeric cap or cost, bad `cost.json`, or open session without `entered` | Fix the record from the user's actual answer or reconcile `cost.json` | never self-approve; ask once |
+| `proposed-budget-exceeded` | The next dispatch would pass the launch cap or cost ceiling | Dispatch fewer launches, or ask for a new envelope | the user declines; report paused |
+| `validate_bar.py` fails | Bar is adjectives, or refs do not resolve | Replace with files or measurements; re-gate | no inspectable bar exists; brief-only |
+| `lint_prompt.py` fails | Over 600 words, missing clause, architecture prescribed | Cut and re-lint | lint passes |
+| Inspection produced nothing | Broken artifact or wrong command | Round fails; send the failure back as the gap | same failure twice triggers no-gain |
+| `init_run.py` exits with `gauntlet-loop-state-present` | This root holds gauntlet-loop state | Use another root; never mix editions | always |
+| Consensus `failed` | Verifiers found gaps | Gaps become run work within the remaining envelope | envelope exhausted: report paused |
 
-**Wave boundary:** when every piece in the wave is `converged`, `capped`, or `blocked`, stop all lanes, merge, and spawn the smoother (`agents/smoother.md`, fresh context, whole artifact, no piece history) to reconcile. Record as a `smooth` round; write `waves/<n>/merge.md`. Protocol: `references/parallelism-and-locks.md`.
+## Completion
 
-**Stops:** `check_stops.py` evaluates user stop, convergence (2 blind wins), round cap (default 10/piece), no-gain rule (same gap twice → re-split), wave cap (default 4), wall clock (default 6h/session), subagent cap (default 400), cost ceiling. First to fire wins; caps pause, never certify.
+- **Verified**: consensus `verified` or `verified-with-dissent`, `EVIDENCE.md` built from state, degradation banner present if isolation was not clean.
+- **Paused**: a cap or budget stop fired. Report the stop reason, what converged, what is capped, and what one more round would need.
+- **Brief-only**: surface unsupported; deliver the brief files and the prompt.
+- **Blocked**: say what is missing (bar, inspection method, approval) and the smallest next action.
 
-### Stage 4 — Verify
+Never report completion from the router, and never skip verification to reach the report.
 
-Runs only on `stopped` or `converged` runs with no consensus. Convergence is a critic outcome, not a verdict.
+## Resources
 
-1. Plan hash first: `hash_plan.py --check`. A mismatch → `cannot-verify` regardless of the artifact.
-2. Spawn N quality verifiers (`agents/quality-verifier.md`) and N integrity verifiers (`agents/integrity-verifier.md`) per piece, fresh context each, given only: goal from `CONTEXT.md`, criteria from `PLAN.md`, the bar, the piece's acceptance, the artifact, inspection output. Nothing else.
-3. Write verdicts to `verification/<piece>/quality-*.json`, `integrity-*.json`; compute consensus with `consensus.py` only.
-4. `verified` / `verified-with-dissent` → evidence stage. `failed` / `unverifiable` → back to the run stage with verifier reasons as new work. Spawning discipline: `references/verification-independence.md`.
-
-### Stage 5 — Evidence
-
-Only after a `verified` or `verified-with-dissent` consensus. Run `hash_artifacts.py`, then `build_report.py`. Every number, path, command, and hash is read from state — the skill computes nothing; missing values print `not recorded` and are listed in section 7. Nine fixed sections: verdict (verbatim), goal and bar, per-piece table, re-run the checks, claim audit summary, artifact integrity, what was not verified, known remaining gaps, budget spent. Template: `assets/evidence-report-template.md`.
-
-### Stage 6 — Handoff
-
-Continuity from state, not narration. Write mode: `write_handoff.py --run-dir <run-dir> --session <n> --exit-reason "<reason>"` → `sessions/<n>/HANDOFF.md` (twelve fixed sections; template in `assets/handoff-template.md`), then the departing agent may append exactly one `## Judgment notes (unverified)` section and nothing more; release the lane lock; write the `sessions.json` exit record. Read mode: read `CONTEXT.md`, newest `HANDOFF.md`, `run.json`, `PLAN.md`, `pieces.json`, `lanes.json`, in that order; check `run.lock` staleness (heartbeat older than 2 hours or holder exited); claim the lane; restate the contract in one line; route to the run stage. Never resume from the handoff alone — state files win any disagreement. Protocol: `references/multi-session.md`.
-
-## Output contract
-
-Run state lives in `.gauntlet/runs/<run-id>/` under the target project root; sealed blind maps in `.gauntlet/sealed/<run-id>/`. Schemas for `run.json`, `pieces.json`, `lanes.json`, verdicts, consensus, claim ledger, cost, and sessions: `references/schemas.md`. User-visible outputs: `workbench.html` (live progress, regenerated by script), `EVIDENCE.md` / `EVIDENCE.json` (after verification only), `HANDOFF.md` (session boundaries).
+- `scripts/`: `precheck.py`, `init_run.py`, `validate_bar.py`, `brief_complete.py`, `validate_pieces.py`, `hash_plan.py`, `lint_prompt.py`, `lock.py`, `blind_pair.py`, `round_record.py`, `check_stops.py`, `claim_audit.py` (`--skip-network` available), `consensus.py`, `hash_artifacts.py`, `build_report.py`, `render_workbench.py`, `write_handoff.py`. Run as `python3 scripts/<name>.py --run-dir <run>`; they read and write only the run directory, plus optional reachability probes.
+- `agents/`: role briefs for builder, critic, reader-proxy, quality-verifier, integrity-verifier, smoother. Paste the brief into the child's spawn message with only the file paths it may read (`references/hatch-mechanics.md`).
+- `references/`: `routing.md`, `schemas.md`, `choosing-a-bar.md`, `domains/`, `prompt-antipatterns.md`, `reader-proxy.md`, `verification-independence.md`, `parallelism-and-locks.md`, `multi-session.md`, `hatch-mechanics.md`.
+- State: `<project>/.gauntlet/runs/<run-id>/` and `<project>/.gauntlet/sealed/<run-id>/`. Outputs: `workbench.html`, `EVIDENCE.md` and `EVIDENCE.json` after verification, `HANDOFF.md` at session boundaries.

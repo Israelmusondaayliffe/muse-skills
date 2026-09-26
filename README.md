@@ -4,48 +4,48 @@ Muse-native skills adapted from the [community agent plugins](https://github.com
 
 The plugins repository ships reusable capabilities for Codex, Claude Code, and Claude Cowork. This repository is its Muse equivalent: each plugin ported into a workspace skill for Muse (Meta's personal AI assistant, running on Hatch).
 
-## What changed in adaptation
+## How these skills work
 
-- Codex/Claude plugin manifests (`.codex-plugin`, `.claude-plugin`), host-specific hooks, and agent YAML formats were **not** copied literally. Their substance was translated into procedures Muse can actually run: terminal shell, live browser, filesystem, cron/scheduled work, and subagent delegation.
-- State paths were re-homed from `~/.claude` / `~/.codex` to `~/workspace/`.
-- Scheduling surfaces became Hatch cron jobs; checkpoint hooks became explicit checkpoint procedures.
-- Scripts were reviewed before porting; only safe, useful, stdlib-based helpers were kept.
-- Nothing user-specific was invented: skills that need personal input (e.g. writing samples for `writing-quality`) ask for it at runtime.
+Each skill provides a concrete route from a request to a finished result: required inputs, approach choices, useful examples, execution steps, recovery, and evidence of completion. Read the entrypoint first and load its linked references when the task calls for them. A clear request with settled decisions should lead to work, without restarting an interview.
+
+These are skill packages, not Codex or Claude plugins. Host-specific hooks and agent configurations become explicit procedures. Muse must check its available tools before using a browser, scheduler, renderer, connector, or subagent. A host name does not prove a capability or an isolated reviewer. Scripts check mechanical conditions; they cannot certify output quality or user approval.
+
+Personal voice and runtime state belong outside replaceable package folders. Upgrades preserve legacy state and local edits. The collection does not include private host configuration or the user's local skills.
 
 ## Skills
 
 | Skill | What it does |
 |---|---|
-| `agent-ops` | Design, build, and audit reusable agent systems on Hatch. Covers pattern selection (single call, workflows, or autonomous agents), subage... |
-| `ai-film-studio` | Explicit-only AI film-production planning: concept grill, film brief, production records, shot packets, and iteration supervision. Trigge... |
-| `brand-studio` | Develop brand strategy, briefs, identity systems and brand reviews with current brand context and independent creative judgment. Use when... |
-| `capability-operator` | Operate Muse's capability inventory on Hatch. Routes ambiguous or multi-domain requests to the right workspace skill, inventories ~/works... |
-| `citizen-forge` | Turn a plain-language internal-tool idea into a governed application with deterministic risk classification, 35 named controls, and relea... |
-| `continuity-vault` | Keep work usable and trustworthy across sessions: route continuity operations (task handoffs, durable extraction, knowledge promotion, kn... |
-| `data-storytelling-studio` | Turns checked analysis into a decision-facing artifact without recalculating or overstating the source evidence. Routes analysis to the r... |
-| `founder-revenue-engine` | Founder-led early revenue work: turn recent public signals into an evidence-backed ICP, commercial narrative, bounded outreach drafts, fo... |
-| `gauntlet` | Run the gauntlet: a heavyweight builder-vs-blind-critic loop for mega projects that justify real cost. Use only when the user explicitly... |
-| `gauntlet-loop` | Run the Gauntlet Loop: explicit-only governed execution for unusually large, consequential projects — plan grilling, compiled workstreams... |
-| `guide-production-studio` | Build source-grounded practical guides: manuals, how-to pages, prompt guides, reference libraries. Owns source lineage, reader-first stru... |
-| `harness-engineering` | Design, build, verify, or maintain Muse's personalized operating setup — memory and instruction files, workspace layout, skills, automati... |
-| `image-prompting-studio` | Write image-generation prompts: create, edit, camera studies, storyboards, typography, infographics, series, grids, brand interpretation,... |
-| `knowledge-work-superpowers` | Run substantial non-coding knowledge work end to end: framing, planning, systematic research, evidence-first analysis, sourced drafting,... |
-| `last30days` | Research what people have actually said about any topic in the last 30 days: recent social, community, market, and web signals with hones... |
-| `loop-observatory` | Read-only cross-loop telemetry: ingest terminal LoopKit runs and registered run roots, normalize outcome evidence, compare loop performan... |
-| `loopkit` | Bounded, resumable Plan-Act-Verify loops with durable on-disk state: design a verifiable contract, execute bounded iterations with receip... |
-| `matt-partok-bundled-plugin-for-knowledge-work` | Run Matt Pocock's idea-to-ship knowledge-work flow: grill decisions one question at a time, model the domain, research or prototype unkno... |
-| `model-evaluation-lab` | Run reproducible model evaluations: freeze an evaluation plan (decision, baseline, candidates, cases, metrics, budget, stopping rules), e... |
-| `model-prompt-lab` | Design, build, migrate, and diagnose production LLM system prompts for GPT-5.x, Claude Fable 5 / Mythos 5, and GPT-6 Astra; design reprod... |
-| `operating-graph` | Run bounded, auditable multi-step agent workflows as an explicit operating graph — design typed node/edge topologies, execute with subage... |
-| `outcome-engine` | Turn a fuzzy idea into a verified result: clarify with a decision grill, write an outcome brief, slice it into verifiable work packages,... |
-| `practice-compiler` | Mine a bounded window of my own work sessions (or selected Codex/Claude Code session roots) for repeated tasks, recurring corrections, fo... |
-| `proofloop` | Run an explicitly requested task through ProofLoop's bounded execution-and-verification protocol (task contract, fixed budgets, evidence-... |
-| `signal-to-system` | Turn knowledge, evidence, and repeated work into useful outcomes across ten workflows: rank messy ideas (curiosity-compass), scan current... |
-| `skill-eval-loop` | Run an evidence-backed eval loop on a workspace skill: build trigger suites (ten positive, ten near-miss negatives), functional checks, a... |
-| `strategy-room` | Pressure-test a consequential decision before resources are committed. Use when the user says "grill me", "interview me relentlessly", "p... |
-| `video-production-studio` | Coordinate brief-to-video production: route the request, plan, build, and QC the delivery. Use when the user wants a video made — explain... |
-| `web-product-studio` | Design and build web products end to end: route the request (greenfield build, redesign, image-first implementation, targeted fix, QA), d... |
-| `writing-quality` | Write in the user's voice, or review and tighten prose. Use when the user asks to write something that sounds like them, calibrate their... |
+| `agent-ops` | Choose and build an agent workflow with clear roles, tool contracts and bounded tests. |
+| `ai-film-studio` | Develop approved film records and shot packets; supervise continuity and iterations. |
+| `brand-studio` | Build brand strategy, briefs and identity systems; review artifacts against the brief. |
+| `capability-operator` | Inspect available capabilities and route work to the appropriate skill. |
+| `citizen-forge` | Turn an internal-tool brief into a governed application with explicit release checks. |
+| `continuity-vault` | Create usable handoffs, extract durable knowledge and preserve source authority. |
+| `data-storytelling-studio` | Turn checked analysis into accurate charts and decision-facing readouts. |
+| `founder-revenue-engine` | Develop evidence-backed customer hypotheses and bounded outreach drafts. |
+| `gauntlet` | Run an explicitly requested, capped builder and blind-critic improvement loop. |
+| `gauntlet-loop` | Run explicitly selected compiled workstreams with execution and acceptance controls. |
+| `guide-production-studio` | Produce complete source-grounded guides with usable, verified examples. |
+| `harness-engineering` | Audit, build and verify an approved assistant setup with recoverable changes. |
+| `image-prompting-studio` | Deliver copyable image prompts and coherent sets that preserve reference constraints. |
+| `knowledge-work-superpowers` | Execute substantial research and writing through to a supported deliverable. |
+| `last30days` | Research recent signals and report coverage, dates and meaningful changes. |
+| `loop-observatory` | Compare recorded loop outcomes without inventing missing telemetry. |
+| `loopkit` | Run bounded, resumable work under a concrete contract and stop conditions. |
+| `matt-partok-bundled-plugin-for-knowledge-work` | Use the explicitly selected Matt workflow for idea-to-delivery knowledge work. |
+| `model-evaluation-lab` | Freeze evaluation cases and compare actual model results against stated criteria. |
+| `model-prompt-lab` | Build or migrate model prompts with verified settings and measured evaluation. |
+| `operating-graph` | Execute explicitly requested typed workflow graphs with bounded state transitions. |
+| `outcome-engine` | Turn an objective into bounded work packages and a verified result. |
+| `practice-compiler` | Inspect an authorized session window and stage redacted improvement proposals. |
+| `proofloop` | Execute an explicitly requested bounded task with evidence-based verification. |
+| `signal-to-system` | Convert selected ideas, evidence or repeated work into a useful artifact. |
+| `skill-eval-loop` | Record real skill evaluations, compare candidates and stage approved repairs. |
+| `strategy-room` | Resolve consequential decisions while skipping questions already settled. |
+| `video-production-studio` | Build and inspect a requested video, distinguishing plans and partial renders. |
+| `web-product-studio` | Build or repair web products and verify the requested rendered flows. |
+| `writing-quality` | Write or revise complete prose while preserving supported claims and protected text. |
 
 ## Layout
 
@@ -59,10 +59,51 @@ skills/<name>/
   agents/         # subagent briefs (some skills)
 ```
 
-## Install
+## Install and update
 
-Copy any `skills/<name>/` directory into your Muse workspace at `~/workspace/skills/<name>/`.
+Use Python 3.10 or later for the collection tools. Read the selected skill's requirements as well; video rendering, browser work and other runtime capabilities are checked separately.
+
+For a first installation, copy a selected `skills/<name>/` folder only when the destination does not exist. For an update, never copy over the installed tree or use a blanket delete/sync. Stage an exact reviewed revision outside `~/workspace/skills/`, then use [the scoped installer](tools/muse_install.py) and its [30-skill policy](tools/install-policy.json). It preserves unlisted local files and skills, the private voice profile, and legacy state.
+
+The example commands below run from the staged repository. Substitute absolute paths and the actual installed baseline commit. Keep manifests and backups outside replaceable packages. Generating a manifest is not approval; review that exact manifest and diff before applying.
+
+```sh
+python3 tools/muse_install.py manifest --git-ref <installed-baseline-commit> > /absolute/baseline.json
+python3 tools/muse_install.py manifest --tree /absolute/staged/skills > /absolute/reviewed-release.json
+python3 tools/muse_install.py plan --staged /absolute/staged/skills --installed /absolute/installed/skills --baseline /absolute/baseline.json --staged-manifest /absolute/reviewed-release.json --only-skill writing-quality
+```
+
+The dry-run blocks local modifications, missing baseline files, unexpected files at new release paths, symlinks, and staged hash drift. Resolve conflicts explicitly; do not relabel locally modified files as a new baseline just to make the check pass. Retired package files are reported and left in place.
+
+After the user approves the exact release and replacement, apply the same pilot selection:
+
+```sh
+python3 tools/muse_install.py apply --staged /absolute/staged/skills --installed /absolute/installed/skills --baseline /absolute/baseline.json --staged-manifest /absolute/reviewed-release.json --only-skill writing-quality --backup-dir /absolute/new-pilot-backup --approval-ref "recorded user approval"
+```
+
+Freeze the reviewed manifest once at review time and verify its pinned SHA-256 before each apply. Never regenerate it from an unreviewed tree merely to clear a mismatch.
+
+The approval reference records authority already given; it does not create authority. Apply requires the reviewed manifest and binds every payload to its approved hash. It backs up changed files and journals recovery before writing. Do not modify source or destination concurrently. Replacing several files is not a single atomic transaction; interrupted work may need recovery.
+
+Verify the pilot's installed hashes, actual catalog discovery, loaded source, and a representative task in a fresh Muse context. Catalog refresh behavior must be observed, not assumed. If that succeeds, plan and apply the remaining collection with a separate backup directory (omit `--only-skill` to include all 30; unchanged files are skipped). No update is complete until the required installed behavior passes.
+
+For Writing Quality, `bin/voice_state.py status` locates the active voice profile. After approval, `migrate` copies a calibrated legacy profile outside the package and refuses conflicts. Never publish the profile. Practice Compiler and Skill Eval Loop document their state locations and migration separately. Preserve both old and new state during rollback.
+
+```sh
+python3 tools/muse_install.py rollback --manifest /absolute/new-pilot-backup/manifest.json
+```
+
+Rollback refuses to overwrite newer user edits. Stop on a conflict and reconcile it; never force a restore over new state. The backup journal restores package files only, not later user state changes.
+
+## Check a candidate
+
+```sh
+python3 tools/validate_collection.py
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tools -p 'test_*.py'
+```
+
+These checks cover metadata, package references and selected helper regressions. They do not prove that Muse can discover the installed skills or produce a good result. Run representative work in Muse and inspect the actual deliverables before accepting a release.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Adapted from the MIT-licensed plugins at https://github.com/Israelmusondaayliffe/plugins.
+MIT. See [LICENSE](LICENSE). Adapted from the MIT-licensed plugins at https://github.com/Israelmusondaayliffe/plugins.

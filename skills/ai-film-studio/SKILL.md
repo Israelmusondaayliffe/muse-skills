@@ -17,7 +17,24 @@ upload, purchase, or publication on its own.
 Explicit-only. This skill is active only when the user deliberately asks for it:
 "Use AI Film Studio", "film brief", "plan my AI film project", or names this skill
 directly. Do **not** activate from a quoted name, a negated or conditional mention,
-an incidental reference, or ordinary filmmaking conversation.
+an incidental reference, or ordinary filmmaking conversation. An ordinary request to make
+a video belongs to the video production skill, not here.
+
+## Start here
+
+1. **Name the station deliverable.** Which record or records come back (brief, asset
+   bible, geography lock, shot record, prompt packet, iteration log, delivery receipt),
+   and for which project. A request for a shot packet is finished only when the packet
+   file exists, not when a plan for it exists.
+2. **Inventory supplied records.** Open each one and note its `id` and `status`. Records
+   marked `approved` are decisions; do not reopen them with grill questions.
+3. **Start at the earliest station whose required inputs are not approved.** With an
+   approved brief, assets and geography lock, go straight to shot direction. With no
+   brief, start at Wayfinding. If an upstream record is missing or draft, deliver what
+   the approved records allow and name the record that blocks the rest.
+4. Work in the project's `records/` folder (see Output contract). Before writing a
+   record, check that the file name is free; if it exists, write a new version
+   (`_v2`) instead of overwriting.
 
 ## Host capabilities (what runs where)
 
@@ -121,6 +138,54 @@ For substantial deliverables, separate these as named phases: I draft, then audi
 If verification fails, return to planning or escalate to the user — never run an
 uncontrolled repair loop. Use subagents for parallel draft/audit work; I integrate
 and issue the final verdict.
+
+## Worked example (illustrative)
+
+Request: "Use AI Film Studio. Brief, vendor asset, stall location and geography lock are
+approved. Write shot 1 of the market scene and build its packet." The scene note says the
+vendor "looks worried when she realizes the cash tin is gone", and the previous scene
+ended with her son at the stall.
+
+- Station: 7 then 8. No grill; every upstream record is approved.
+- Judgment: "looks worried" is an emotion label, so direct behavior instead: her hand stops
+  on empty wood, eyes drop and then sweep the counter, shoulders stay still for the queue.
+  The son is a prior-scene carry-over and is not active, so he is removed. Five seconds
+  holds two beats (reach, 0 to 2 s; stop and search, 2 to 5 s); a third beat would crowd it.
+  Geography comes from the lock: street-side camera, counter-to-street axis, awning pole
+  visible.
+- Build (from the skill folder, `$OUT` being the project folder):
+
+  ```bash
+  P="$OUT/records/prompt_market_stall_001.json"
+  test -e "$P" && echo "exists, choose a new name" || python3 bin/film_advisor.py shot "$OUT/records/shot_market_stall_001.json" generic-video > "$P"
+  ```
+
+  Then read `status` in the output. `complete_model_neutral` with an empty
+  `compiled_prompt` is correct; `stopped` lists the missing fields.
+- Deliver the two records and a stopped result for generation: "Paid generation needs the
+  target surface, cost exposure and an approval ID."
+
+A wrong version would ask concept questions the brief already answers, keep the son in
+frame, write "she looks worried" as the performance, or say a clip was made.
+
+## When something goes wrong
+
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| `film_advisor.py` prints `"status": "stopped"` (exit code is still 0) | Missing fields or an id not matching `shot_[a-z0-9_]+` | Add the named fields or fix the id, then re-run once | the missing field needs a decision nobody made; ask |
+| An upstream record is `draft` or absent | Station skipped | Deliver what approved records allow; name the blocking record | the user has not approved it; do not approve it yourself |
+| A continuity shot has no approved asset or geography id | Asset bible or lock incomplete | Build the missing record as `draft` for approval | the shot depends on it; report blocked |
+| A generation attempt fails repeatedly | Wrong layer changed | Classify the earliest failure (asset, geography, performance, direction, adapter) and change one variable | the failed-attempt budget is spent; simplify the shot or reopen the decision |
+| A model-specific syntax question | No formatter here | Keep the model-neutral packet; verify the live surface before use | never emit syntax from memory |
+
+## Completion
+
+- **Station complete:** each requested record exists on disk, traces to approved inputs
+  or labeled assumptions, and any helper output reads `complete_model_neutral`.
+- **Stopped:** an external action (generation, upload, publication) is next. Return the
+  action, the approval evidence it needs, and the exact next step.
+- **Blocked:** a required upstream decision or record is missing. Deliver the records
+  you could build and name the blocker.
 
 ## Output contract
 

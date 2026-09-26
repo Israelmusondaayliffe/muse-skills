@@ -450,11 +450,12 @@ def main(argv=None):
         % (val(budgets.get("wall_clock_hours_per_session")), val(cost.get("wall_clock_hours")))
     )
     md.append(
-        "| Cost ceiling | %s | tokens: %s | %s |"
+        "| Cost ceiling | %s | %s (tokens: %s) | %s |"
         % (
             val(budgets.get("cost_ceiling")),
+            val(cost.get("cost_spent")),
             val(cost.get("tokens")),
-            "not computable" if cost.get("tokens") in (None, "unknown") else "see ledger",
+            remaining(budgets.get("cost_ceiling"), cost.get("cost_spent")),
         )
     )
     md.append("")

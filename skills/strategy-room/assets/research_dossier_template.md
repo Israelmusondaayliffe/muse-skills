@@ -110,4 +110,4 @@ Run before handoff:
 - [ ] Expert disagreement is mapped explicitly, not buried
 - [ ] Inferences are flagged as "researcher inference" rather than as researched facts
 
-The orchestrator will run `scripts/dossier_check.py` against this dossier. If the script fails, the researcher will be re-invoked with the failure reasons.
+The orchestrator will run `bin/dossier_check.py` against this dossier. If the script fails, the researcher will be re-invoked with the failure reasons.

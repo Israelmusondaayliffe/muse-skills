@@ -26,11 +26,11 @@ Pick one primary route at the start. Do not drift into drafting before the evide
 
 ## Workflow
 
-1. **Define the brief.** Ask the user for (or confirm): the offer in one sentence, the commercial outcome they want (early customers, design partners, beta users, message validation), the evidence window (default: last 30 days), prohibited actions, and any positioning decisions already settled. Ask only when the answer would materially change the work.
+1. **Define the brief from what was supplied.** Take the offer in one sentence, the commercial outcome (early customers, design partners, beta users, message validation), the evidence window (default: last 30 days, ending today), prohibited actions, and settled positioning from the request and attached files. Ask only for an item that is missing and would change the work; a supplied brief proceeds without re-confirmation.
 2. **Choose the route** using `references/routing.md`. If no evidence exists yet, route to `signal-research` before claiming an ICP.
-3. **Research with Hatch tools.** Use `browser.search` and `browser.open` for public sources (forums, reviews, GitHub issues, company pages, job posts, changelogs), and the `social` skill for public posts. Prefer original pages over snippets. Never bypass login walls, paywalls, access controls, rate limits, or robots restrictions.
+3. **Gather evidence.** If the user supplied saved signals or said not to research live, work only from those: sort each signal into in-window, stale (dated before the window) or undated background before using it. Otherwise research with Hatch tools: `browser.search` and `browser.open` for public sources (forums, reviews, GitHub issues, company pages, job posts, changelogs), and the `social` skill for public posts. Prefer original pages over snippets. Never bypass login walls, paywalls, access controls, rate limits, or robots restrictions.
 4. **Produce the route's output.** Follow the reference for that route. Record every claim's source, source type, and publication date (or "date unavailable").
-5. **Run the checks.** Apply `references/commercial-copy-checks.md` to all prose. For outreach/narrative/copy, prefer the `writing-quality` workspace skill when it fits; otherwise use the bundled checks. Validate the route artifact with `scripts/validate_output.py`.
+5. **Run the checks.** Apply `references/commercial-copy-checks.md` to all prose. For outreach/narrative/copy, prefer the `writing-quality` workspace skill when it fits; otherwise use the bundled checks. Validate each route artifact (see Output Contract).
 6. **Deliver drafts and handoff instructions only.** Return copy plus exact next steps the user (or a separately authorized action) must take. Drafting never authorizes sending.
 
 ## Evidence and Safety Rules
@@ -75,12 +75,40 @@ All optional. Missing companions do not block any route.
 
 ## Output Contract
 
-- Each run produces a route artifact JSON matching `assets/route-artifact-schema.json` (template: `assets/route-artifact-template.json`). Validate with:
+- Each run produces a route artifact JSON matching `assets/route-artifact-schema.json` (template: `assets/route-artifact-template.json`), written to your working folder `$OUT`, never into this skill folder. Validate from this skill's directory:
   ```bash
-  python3 scripts/validate_output.py <artifact.json>
+  python3 scripts/validate_output.py "$OUT/icp-artifact.json"
   ```
+  Exit 0 means the structure is valid and `send_authorized` is false; it does not check whether claims are true.
 - The `first-customers` route additionally produces a standalone HTML report via `references/report-artifact.md` and `scripts/generate_report.py`, saved under `~/workspace/your_files/` or a goal's files directory when the user wants it.
 - Copy outputs (narrative, outreach, LinkedIn) are delivered as text plus their artifact JSON.
+
+## Worked example (illustrative)
+
+Offer: a booking-reminder add-on for independent physiotherapy clinics; outcome: three design partners for a free pilot; no customers yet. Saved signals: two owner posts from this month about phoning every patient the day before, a job post for a front-desk role "managing reminder calls", a four-month-old thread asking for reminder software, and a post from a 20-site operator saying their practice-management system already handles reminders.
+
+- Route: `icp`, then `outreach`. The evidence exists, so there is no new research.
+- Judgment: the ICP is single-site clinics where the owner or front desk still makes reminder calls (two posts plus the job post, all dated in window). The 20-site operator is a disqualifier, not a prospect: an existing system already solves the problem. The four-month-old thread is stale and stays out of the ICP evidence. Confidence is medium, from three in-window signals and no interviews.
+- Outreach: message 1 references the specific public post ("you mentioned phoning every patient the day before") and asks one question about call volume. There is no result claim, because none exists. The pilot is offered as a free 60-day test. Message 2 is a single follow-up. Stop rules: reply, opt-out, invalid address, two-message cap.
+- Validate both artifacts with `validate_output.py` and state `send_authorized: false`.
+
+A wrong version would write "clinics like yours cut no-shows by 40%" (the style validator scores that sentence 100/100, so the fabrication check has to catch it), cite the stale thread as current demand, or add the 20-site operator to the prospect list.
+
+## When something goes wrong
+
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| No signal has a source and a date | Not evidence yet | Run `signal-research` (or ask for saved signals if live research is out of scope) | there is still no dated evidence; deliver the commercial-decision gap |
+| Offer or positioning unresolved | Missing founder decision | Write the commercial-decision gap and stop drafting dependent claims | immediately for those claims; finish independent work |
+| `validate_output.py` exits 1 | Missing field, bad route, or `send_authorized` not false | Fix the named fields and re-run once | never set `send_authorized` true without the user's explicit action |
+| A draft needs a result, number or testimonial | No proof exists | Replace it with an honest pilot or learning claim | never invent it |
+| Live search is blocked or rate-limited | Host or site limits | Use what returned, record the failed lanes, narrow the claim | never bypass access controls |
+
+## Completion
+
+- **Delivered:** each requested route artifact validates, every claim carries a source and date, and drafts are marked unsent with their stop rules.
+- **Gap:** the evidence or a founder decision is missing. Deliver the commercial-decision gap and any independent route output, and name the next decision.
+- Drafting never completes an external action. The reply lists the exact steps the user takes to send or publish.
 
 ## Operating Rules
 

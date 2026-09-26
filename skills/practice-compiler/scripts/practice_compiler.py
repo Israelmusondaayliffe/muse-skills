@@ -3,18 +3,22 @@
 
 Adapters: `muse` (Muse/Hatch transcript exports in the normalized JSONL event
 schema, see references/transcript-export.md), `codex` (Codex session JSONL),
-`claude` (Claude Code project JSONL). The default state root keeps all
-persistent records inside the workspace skill's own hidden_files tree; override
-with --state-root or the PRACTICE_COMPILER_STATE environment variable.
+`claude` (Claude Code project JSONL). Persistent records live outside the
+replaceable skill package at ~/workspace/practice-compiler/state; override with
+--state-root or the PRACTICE_COMPILER_STATE environment variable. Earlier
+versions wrote to the package's hidden_files/state; `state status` reports that
+legacy tree and `state migrate` copies it forward without deleting it.
 """
 
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import json
 import os
 import re
+import shutil
 import sys
 import tempfile
 from collections import Counter, defaultdict
@@ -88,20 +92,175 @@ def scan_id() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
-def root_path(explicit: str | None) -> Path:
+SKILL_DIR = Path(__file__).resolve().parent.parent
+STATE_ENV = "PRACTICE_COMPILER_STATE"
+LEGACY_ENV = "PRACTICE_COMPILER_LEGACY_STATE"
+MIGRATION_MARKER = "migrated-from.json"
+IGNORED_STATE_FILES = {MIGRATION_MARKER, ".state.lock"}
+
+
+def default_state_root() -> Path:
+    """User state lives outside the replaceable skill package."""
+    return (Path.home() / "workspace" / "practice-compiler" / "state").resolve()
+
+
+def legacy_state_roots() -> list[Path]:
+    """In-package state roots written by earlier versions. Read only; never deleted."""
+    override = os.environ.get(LEGACY_ENV)
+    if override:
+        return [Path(override).expanduser().resolve()]
+    candidates = [
+        SKILL_DIR / "hidden_files" / "state",
+        Path.home() / "workspace" / "skills" / "practice-compiler" / "hidden_files" / "state",
+    ]
+    unique: list[Path] = []
+    for item in candidates:
+        resolved = item.resolve()
+        if resolved not in unique:
+            unique.append(resolved)
+    return unique
+
+
+def state_files(root: Path) -> list[Path]:
+    if not root.is_dir():
+        return []
+    return sorted(
+        path for path in root.rglob("*")
+        if path.is_file() and path.relative_to(root).parts[0] not in IGNORED_STATE_FILES
+    )
+
+
+def tree_digest(root: Path) -> str | None:
+    """Content hash of a state tree, or None when it holds no records."""
+    files = state_files(root)
+    if not files:
+        return None
+    digest = hashlib.sha256()
+    for path in files:
+        digest.update(str(path.relative_to(root)).encode("utf-8") + b"\0")
+        digest.update(hashlib.sha256(path.read_bytes()).digest())
+    return digest.hexdigest()
+
+
+def state_status() -> dict[str, Any]:
+    """Report the active default state root, legacy roots, and any needed action."""
+    current = default_state_root()
+    current_digest = tree_digest(current)
+    marker = load_json(current / MIGRATION_MARKER, {}) if (current / MIGRATION_MARKER).is_file() else {}
+    legacy = []
+    for root in legacy_state_roots():
+        digest = tree_digest(root)
+        if digest is None:
+            continue
+        migrated = digest == current_digest or (
+            marker.get("legacy_path") == str(root) and marker.get("legacy_digest") == digest
+        )
+        legacy.append({"path": str(root), "digest": digest, "migrated": migrated})
+    pending = [item for item in legacy if not item["migrated"]]
+    result: dict[str, Any] = {
+        "state_root": str(current),
+        "state_has_records": current_digest is not None,
+        "legacy_roots": legacy,
+    }
+    if current_digest is not None and pending:
+        result["active"] = str(current)
+        result["action"] = "conflict"
+        result["detail"] = (
+            "state and legacy records differ; reads use the state root, persistent writes are refused "
+            "until the user picks one root with --state-root. Nothing was merged, overwritten, or deleted."
+        )
+    elif current_digest is not None:
+        result["active"] = str(current)
+        result["action"] = "none"
+    elif len(pending) == 1:
+        result["active"] = pending[0]["path"]
+        result["action"] = "migrate"
+        result["detail"] = "run: python3 scripts/practice_compiler.py state migrate"
+    elif pending:
+        result["active"] = None
+        result["action"] = "conflict"
+        result["detail"] = "several legacy roots hold different records; run state migrate --from <path> for the one to keep"
+    else:
+        result["active"] = str(current)
+        result["action"] = "none"
+    return result
+
+
+def root_path(explicit: str | None, write: bool = False) -> Path:
+    """Resolve the state root: --state-root, then PRACTICE_COMPILER_STATE, then the default.
+
+    With the default root, legacy in-package state is honored: reads use it until it is
+    migrated, and persistent writes refuse to fork or overwrite it.
+    """
     if explicit:
         return Path(explicit).expanduser().resolve()
-    state_home = os.environ.get("PRACTICE_COMPILER_STATE")
+    state_home = os.environ.get(STATE_ENV)
     if state_home:
         return Path(state_home).expanduser().resolve()
-    return (
-        Path.home()
-        / "workspace"
-        / "skills"
-        / "practice-compiler"
-        / "hidden_files"
-        / "state"
-    ).resolve()
+    status = state_status()
+    if status["action"] == "none":
+        return default_state_root()
+    if write:
+        raise CompilerError(
+            f"state needs attention before writing ({status['action']}): "
+            f"{status.get('detail', '')} Legacy roots: {[item['path'] for item in status['legacy_roots']]}"
+        )
+    return Path(status["active"]) if status["active"] else default_state_root()
+
+
+def cmd_state(args: argparse.Namespace) -> dict[str, Any]:
+    if args.state_command == "status":
+        return state_status()
+    return migrate_state(getattr(args, "source", None))
+
+
+def migrate_state(source: str | None = None) -> dict[str, Any]:
+    """Copy one legacy state tree to the default root. Never deletes or overwrites."""
+    target = default_state_root()
+    if source:
+        legacy = Path(source).expanduser().resolve()
+    else:
+        pending = [item for item in state_status()["legacy_roots"] if not item["migrated"]]
+        if not pending:
+            return {"migrated": False, "reason": "no unmigrated legacy state", "state_root": str(target)}
+        if len(pending) > 1:
+            raise CompilerError("several legacy roots differ; pass --from <path> to choose one")
+        legacy = Path(pending[0]["path"])
+    legacy_digest = tree_digest(legacy)
+    if legacy_digest is None:
+        return {"migrated": False, "reason": f"no legacy records at {legacy}", "state_root": str(target)}
+    if target.is_symlink():
+        raise CompilerError(f"state root is a symlink; refusing to write through it: {target}")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with open(target.parent / ".state.lock", "a") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        current_digest = tree_digest(target)
+        if current_digest is not None and current_digest != legacy_digest:
+            raise CompilerError(
+                f"state root already holds different records; nothing overwritten: {target} (legacy kept at {legacy})"
+            )
+        if current_digest is None:
+            staging = Path(tempfile.mkdtemp(prefix=".state.migrating.", dir=target.parent))
+            for path in state_files(legacy):
+                destination = staging / path.relative_to(legacy)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, destination)
+            if tree_digest(staging) != legacy_digest:
+                raise CompilerError(f"copy verification failed; staged copy left at {staging}")
+            try:
+                os.rename(staging, target)  # fails if a non-empty state root appeared meanwhile
+            except OSError as error:
+                raise CompilerError(f"state root changed during migration; staged copy left at {staging}: {error}") from error
+        atomic_json(target / MIGRATION_MARKER, {
+            "legacy_path": str(legacy), "legacy_digest": legacy_digest, "migrated_at": now(),
+        })
+    return {
+        "migrated": current_digest is None,
+        "reason": "copied" if current_digest is None else "already identical; marker recorded",
+        "state_root": str(target),
+        "legacy_path_kept": str(legacy),
+        "sha256": legacy_digest,
+    }
 
 
 def atomic_json(path: Path, payload: Any) -> None:
@@ -554,7 +713,7 @@ def cmd_ingest_design(args: argparse.Namespace) -> dict[str, Any]:
         raise CompilerError("--since must be earlier than or equal to --until")
     payload = load_json(Path(args.input).expanduser().resolve())
     incoming = design_export_signals(payload, since, until)
-    root = root_path(args.state_root)
+    root = root_path(args.state_root, write=not args.stdout)
     if args.stdout:
         return {"mode": "stdout", "signals": len(incoming), "proposal_records": build_proposals(incoming, args.min_occurrences)}
     registry_path = root / "signal-registry.json"
@@ -639,7 +798,7 @@ def merge_registry(root: Path, proposals: list[dict[str, Any]]) -> dict[str, Any
 def cmd_scan(args: argparse.Namespace) -> dict[str, Any]:
     selected_files, classification_counts, selection_errors = select_files(args)
     stdout_only = bool(getattr(args, "stdout", False))
-    root = root_path(getattr(args, "state_root", None))
+    root = root_path(getattr(args, "state_root", None), write=not stdout_only)
     cursor_path = root / "cursor.json"
     cursor = {"schema_version": 2, "processed": {}} if stdout_only else load_json(cursor_path, {"schema_version": 2, "processed": {}})
     processed = cursor.setdefault("processed", {})
@@ -737,9 +896,15 @@ def read_proposals(root: Path) -> list[dict[str, Any]]:
 
 
 def cmd_report(args: argparse.Namespace) -> dict[str, Any]:
-    proposals = read_proposals(root_path(args.state_root))
+    root = root_path(args.state_root)
+    proposals = read_proposals(root)
     counts = Counter(item.get("status", "unknown") for item in proposals)
-    return {"proposal_count": len(proposals), "status_counts": dict(counts), "proposals": proposals}
+    result = {"state_root": str(root), "proposal_count": len(proposals), "status_counts": dict(counts), "proposals": proposals}
+    if not args.state_root and not os.environ.get(STATE_ENV):
+        status = state_status()
+        if status["action"] != "none":
+            result["state_notice"] = {"action": status["action"], "detail": status.get("detail")}
+    return result
 
 
 def preferred_handoff_owner(destination: str) -> str | None:
@@ -762,7 +927,7 @@ def preferred_handoff_owner(destination: str) -> str | None:
 
 
 def cmd_decide(args: argparse.Namespace) -> dict[str, Any]:
-    root = root_path(args.state_root)
+    root = root_path(args.state_root, write=True)
     proposal_path = root / "proposals" / f"{args.proposal_id}.json"
     proposal = load_json(proposal_path)
     decision = {
@@ -874,6 +1039,12 @@ def parser() -> argparse.ArgumentParser:
     decide.add_argument("--available-owner", action="append", help="confirmed available preferred owner")
     decide.add_argument("--state-root")
     decide.set_defaults(func=cmd_decide)
+    state = sub.add_parser("state", help="report or migrate legacy in-package state")
+    state_sub = state.add_subparsers(dest="state_command", required=True)
+    state_sub.add_parser("status", help="show the active state root and any legacy records")
+    migrate = state_sub.add_parser("migrate", help="copy legacy state to the default root; never deletes or overwrites")
+    migrate.add_argument("--from", dest="source", help="legacy state root to migrate when several exist")
+    state.set_defaults(func=cmd_state)
     return result
 
 

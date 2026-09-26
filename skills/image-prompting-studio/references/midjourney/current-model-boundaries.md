@@ -1,6 +1,6 @@
 # Dated V8.2 edit model baseline
 
-Source baseline checked: September 1, 2026. Retained for historical examples; not reverified during extraction. Read `../../../references/model-profiles.md` for shared current guidance. Check current model support before including version-sensitive prompt parameters.
+Source baseline checked: September 1, 2026. Retained for historical examples; not reverified during extraction. Read `../model-profiles.md` for shared current guidance. Check current model support before including version-sensitive prompt parameters.
 
 Use official Midjourney documentation and update posts as the authority for current capability. Use community tests as dated operational evidence, not permanent product truth.
 

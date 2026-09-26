@@ -20,7 +20,7 @@ Read current state before proposing changes. Read-only: no changes of any kind. 
 1. Inventory the surfaces the request touches: instruction files (`~/SOUL.md`, `~/IDENTITY.md`, `~/USER.md`, `~/MEMORY.md`, `~/AGENTS.md`, `~/TOOLS.md`, `~/docs/`), workspace layout and skills, memory notes, goals, cron jobs, hooks, feed prompt, ideas.
 2. Run any deterministic check the harness already owns first; its failures enter findings as verified facts with the script output as evidence.
 3. Check for conflicts, placeholders, stale paths, duplicated ownership, missing validators, untrusted hooks, unsupported settings, and absent evidence.
-4. Run the over-constraint pass: `python3 scripts/context_scan.py <files>` and read `references/context-doctrine.md`. Reasoning-echo hits rank first (they cause refusals); verification instructions second.
+4. Run the context pass: `python3 scripts/context_scan.py <files>` and read `references/context-doctrine.md`. Rank conflicts and stale facts first, reasoning-echo requests second. Scanner hits on checks or examples are review items: keep task-specific checks and examples that observed runs support.
 5. Classify findings across information, execution, and feedback layers; separate verified facts, inferred risks, and user decisions.
 6. Promote repeat finding classes into a deterministic check script instead of longer prose: if the harness lacks one, creating it is the first proposed fix.
 7. Stop when the next safe target action is known. An audit is support work — it does not count as implementation progress.
@@ -32,7 +32,7 @@ Plan the outcome, scopes, operations, approvals, evidence, and rollback. Leave n
 2. Set caps: expected primary outputs, a support-artifact cap, a total launch cap, and a one-low-yield-wave stop (one wave with no target-state delta ends the run for re-planning).
 3. Design the information, execution, and feedback layers per `references/harness-architecture.md`.
 4. Put each requirement in the narrowest durable scope.
-5. Plan removals before additions. Instructions the audit marked as model compensation go in their own approval group, each with a stated reason.
+5. Plan removals before additions. Instructions the audit marked as model compensation go in their own approval group, each with a stated reason and the subtraction test that will confirm it. Checks and examples the audit found load-bearing stay.
 6. Reuse installed capabilities before proposing a new skill.
 7. Define separate approval groups per `references/safety-and-approvals.md`. Generate file previews, operations, expected hashes, the smallest proportional checks, failure stops, and rollback actions.
 8. When the outcome depends on visual, editorial, or strategic human judgment, name the task-owned qualitative acceptance artifact: owner, evidence surface, threshold, failure stop — separate from functional proof.
@@ -41,12 +41,15 @@ Plan the outcome, scopes, operations, approvals, evidence, and rollback. Leave n
 ## Build
 Apply only the approved operation groups. Do not reinterpret the plan during execution.
 
+For local file changes, use [the scoped operations helper](file-operations.md). It provides dry-run, hash preconditions, backups, and conflict-aware rollback.
+
 Start gate: re-read current hashes and stop on drift; run a dry-run pass and review the receipt; confirm approved groups and allowed roots.
 
-- Apply one approval group at a time. Run `tar -czf BACKUP-<group>-<date>.tgz <files>` before any update, write files atomically (write temp, rename), and record pre/post sha256 in the receipt.
+- Apply one approval group at a time: `harnessctl.py dry-run`, review the target list and hashes, then `harnessctl.py apply --backup-dir <new directory>`. The helper refuses a reused backup directory, checks every selected target before writing, copies and hash-checks each backup, writes the manifest journal before the first change, writes atomically, and records before/after sha256 per file.
+- Apply is per file, not one transaction. If apply stops partway, report which entries the manifest shows applied and roll back or finish from a new plan.
 - Preserve unrelated files. If reality invalidates the plan, log the deviation and return to planning.
 - After every change that affects persistent context, re-run the behavior checks from the plan — not only after memory or instruction-file edits.
-- Rollback: restore from the backup tarballs in reverse apply order and verify hashes before reporting recovery.
+- Rollback: `harnessctl.py rollback --manifest <backup dir>/manifest.json`. It checks every entry before restoring, restores in reverse order, skips entries already at their pre-apply hash, refuses entries changed after apply (new user work is preserved and reported as a conflict), and removes created files only when unchanged. Directories the apply created stay in place. Report the result the helper prints, not an assumed recovery.
 
 ## Runner
 Use for an explicitly requested sustained build. Ordinary approved builds stay in the current conversation with one compact run ledger; durable state (a ledger file under the run directory) only when the run must cross sessions or resume.
@@ -80,13 +83,13 @@ Cadence:
 Workflow:
 1. Run the harness's deterministic checks first; failures are the first work items. Then audit against fresh state.
 2. Compare current behavior with the last verified receipt. Classify drift as user change, product change, broken dependency, stale policy, or missing enforcement.
-3. Remove dead weight before adding new instructions. After a model generation change, run `context-doctor` across the whole chain and treat instructions written for the previous generation as removable until a regression proves otherwise.
+3. Remove stale, conflicting, or duplicated lines before adding new instructions. After a model generation change, run the context-doctor phase across the whole chain; treat instructions written for the previous generation as removal candidates and confirm each removal with the subtraction test in `references/prompt-governance.md`.
 4. Promote any correction seen twice into the deterministic check script when it is deterministically checkable.
 5. Produce a reversible update plan and approval groups; run the standard build and verification phases.
 6. Follow `references/model-change-policy.md` after every major model change.
 
 ## Instruction-file engineering
-Keep instruction files short, accurate, durable, and scoped. Most of the value is in what comes out: cut anything visible from the file system or already true of the model's default behavior. Distinguish model compensation (removable) from user policy and taste (kept).
+Keep instruction files short, accurate, durable, and scoped. Cut anything visible from the file system, stale, or duplicated; test before cutting a line on the belief that the model already does it by default. Distinguish model compensation (removable) from user policy and taste (kept).
 
 1. Inspect the applicable chain: `~/SOUL.md` and `~/IDENTITY.md` (persona), `~/USER.md` (the person), `~/MEMORY.md` plus `~/memory/` notes (curated memory), `~/AGENTS.md` (workspace conventions), `~/docs/`.
 2. Run the context-doctor phase over the chain and remove what it finds before adding anything new.
@@ -102,7 +105,7 @@ Read-only over-constraint audit. Produces findings and a proposed removal set; n
 2. Run `python3 scripts/context_scan.py PATH [--json OUT.json]` for deterministic findings.
 3. Apply `references/context-doctrine.md` to what the scanner cannot see: judgment calls, examples that could be interface design, upfront detail that could load on demand, content that only restates what the file system shows.
 4. Keep model compensation (removable) separate from user policy, taste, gotchas, authority boundaries, and data routing (not removable).
-5. Rank: reasoning-echo first, verification instructions second, everything else by token weight.
+5. Rank: conflicts and stale facts first, reasoning-echo requests second, everything else by observed cost. A scanner hit on a check or example is a review item; keep it when it is task-specific and supported by observed runs.
 6. Report the removal set with a reason per line and the keep set with justification. Application belongs to instruction-file engineering (files) or skill-engineer (skills).
 
 ## Skill engineering

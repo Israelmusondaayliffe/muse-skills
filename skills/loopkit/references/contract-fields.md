@@ -10,3 +10,5 @@
 - `iteration.max_iterations`: hard cap supplied or approved by the user.
 - `iteration.no_progress_limit`: consecutive no-progress cap supplied or approved by the user.
 - `stops`: plain-language rules for success, failure, blocked, and exhausted states.
+
+The template ships with `__REPLACE_ME__` placeholders. A contract that still contains one anywhere in a required string is not complete: `validate_contract.py` exits 1 and `init_run.py` refuses to create a run. Empty `allowed_paths`, `forbidden_paths`, `external_actions`, and `judgment_criteria` arrays are valid but mean "none"; fill them when the task has paths or gated actions.

@@ -5,61 +5,76 @@ description: "Read-only cross-loop telemetry: ingest terminal LoopKit runs and r
 
 # Loop Observatory
 
-Read-only measurement layer for bounded agent loops. It ingests terminal LoopKit runs and explicitly registered run roots, normalizes them into comparable evidence records, and produces portfolio metrics and judge-calibration audits as JSON plus Markdown.
+Measure bounded agent loops without touching them. The finished result is the CLI's own records (ingest counts, a JSON and Markdown portfolio report, an audit, repair handoffs) plus a plain reading of what the numbers do and do not show. Missing evidence stays unknown.
 
-Adapted from the public `loop-observatory` plugin (MIT) by Israelmusondaayliffe. Codex/Claude plugin manifests, slash commands, and hook formats do not transfer; everything here runs with native Hatch tools.
+Adapted from the public `loop-observatory` plugin (MIT). Everything runs with native Hatch tools; there are no plugin hooks or slash commands.
 
-## Router
+## Start here
 
-Classify the request and run only the matching phase. Load the named reference only when needed.
+Run commands from this skill folder with `bin/loop_observatory.py` (standard library; reads sources, writes only its own state; no network or subprocess).
 
-- **Ingest** new terminal runs: `references/ownership-and-sources.md`, `references/normalized-schema.md`, then Ingest below.
-- **Report** portfolio metrics: ingest once first, then Report below.
-- **Audit** judge calibration: ingest once first, then Audit below.
-- A request to design, run, schedule, or repair a loop is out of scope: route it to the loopkit or agent-ops skill and say so.
+1. **Locate the runs.** LoopKit runs are found under `$LOOPKIT_STATE_ROOT` (default `~/workspace/loopkit/`) or `--loopkit-root <dir>`: any folder with `state.json` beside `contract.json`. Other engines' run roots (folders with `state.json` beside `graph.json`) must be registered first with `register-root <absolute-dir>`. Ingest only roots the user named or already registered.
+2. **Observatory state** lives in `$LOOP_OBSERVATORY_HOME` (default `~/workspace/loop-observatory/`). Point it at a scratch folder for trial runs.
+3. **Pick the phase:**
 
-## Tooling
+| The request | Phase | Command |
+|---|---|---|
+| New runs finished; "pull them in" | Ingest | `ingest [--loopkit-root <dir>]` |
+| Acceptance, exhaustion, cost per accepted result, comparison across loops | Report (ingest first) | `report` |
+| "Is the judge right?", false passes or failures | Audit (ingest first) | `audit` |
+| A flagged record needs fixing | Repair handoff | `repair-handoff <record-id>` |
+| Design, run, schedule, or repair a loop | Out of scope | route to `loopkit` or `agent-ops` and say so |
 
-`bin/loop_observatory.py` — ported CLI (reviewed: pure stdlib JSON/file I/O with atomic writes; read-only against sources, no network, no subprocess, no credential access).
+## What the numbers mean
 
-- State lives in `$LOOP_OBSERVATORY_HOME` (default `~/workspace/loop-observatory/`).
-- LoopKit runs are discovered under `$LOOPKIT_STATE_ROOT` (default `~/workspace/loopkit/`), matching the loopkit skill.
-- External run roots must be registered explicitly before ingestion.
+Field definitions: `references/normalized-schema.md`; report shape: `assets/report-template.json`.
 
-## Ingest
+- **Ingest counts.** `ingested` are new terminal runs. `unchanged` were seen before with the same content. `incomplete` are still running or lack a terminal status. `corrupt` could not be read; the error list names them. `incomplete` and `corrupt` are evidence gaps, never successes. `discovered: 0` means no evidence, not a healthy portfolio.
+- **Human acceptance rate** uses only runs with a human label. Unlabeled runs are excluded, and the report says how many had labels (`human_acceptance_known`).
+- **Cost per accepted result** is reported only when every accepted run has known cost. One accepted run without cost makes it `null`.
+- **Audit.** A false pass is a passing machine verdict with a negative human label; a false failure is the reverse. Unlabeled runs stay outside the disagreement rate. Repeated escalation reasons appear as clusters.
+- **Scheduled use.** `report --scheduled` returns `no-op` when nothing new was ingested. A recurring report is a cron job the user approves; never an endless shell loop.
 
-1. Register external run roots once: `python3 bin/loop_observatory.py register-root /absolute/path/to/root` (the LoopKit root needs no registration).
-2. Run: `python3 bin/loop_observatory.py ingest [--loopkit-root /absolute/path]`
-3. When read-only behavior must be proven, confirm the source fingerprint before and after: the CLI hashes each source tree around the read and fails if it changes mid-read.
-4. Return the counts the CLI reports — ingested, unchanged, duplicate, incomplete, corrupt — plus the error list for corrupt sources. Treat corrupt and incomplete sources as evidence failures, never as terminal successes.
+## Worked example (illustrative, runnable from this skill folder)
 
-## Report
+```bash
+export LOOP_OBSERVATORY_HOME=$(mktemp -d)
+python3 bin/loop_observatory.py register-root "$PWD/tests/fixtures/graph-run"
+python3 bin/loop_observatory.py ingest --loopkit-root "$PWD/tests/fixtures/loopkit-run"
+python3 bin/loop_observatory.py report
+python3 bin/loop_observatory.py audit
+```
 
-1. `python3 bin/loop_observatory.py report` writes a timestamped JSON + Markdown report under `<state>/reports/` and prints the summary.
-2. Acceptance rate is calculated only from runs with known human labels. Cost per accepted result is calculated only when every accepted run has known cost evidence. Missing evidence stays unknown — never inferred (field definitions in `references/normalized-schema.md`).
-3. Scheduled use: `python3 bin/loop_observatory.py report --scheduled` returns a clean no-op when no new terminal runs were ingested since the last report. Recurrence is a cron job created with user approval — Hatch has no plugin hooks; `--scheduled` exists to give it no-op behavior.
+Ingest reports 2 discovered, 2 ingested. The report shows `human_acceptance_rate` 1.0 over 2 labeled runs, `exhausted_runs` 1, and `cost_per_accepted_result` null. The audit lists one false failure (a record id starting `operating-graph-og-001-`) and a disagreement rate of 0.5.
 
-## Audit
+Reading it: both runs were accepted by a human, but the graph run hit its iteration limit and its judge said fail, so the judge is too strict for that loop. Cost per accepted result is unknown because that accepted run has no cost evidence, not because it was free. Next step: `repair-handoff <that record id>` and hand it, unresolved, to the loop's owner.
 
-1. `python3 bin/loop_observatory.py audit` compares machine verdicts against later human labels.
-2. A false pass requires a positive machine verdict plus a negative human label; a false failure requires the reverse. Unlabeled runs stay outside disagreement rates. Escalation reasons that repeat across runs are reported as clusters.
-3. Repairs are out of scope here. For a flagged RECORD_ID, run `python3 bin/loop_observatory.py repair-handoff RECORD_ID` and return the complete handoff unresolved. Do not claim a repair occurred.
+A wrong version would report an average cost of 0.42 per accepted result, call the exhausted run a failure of the work, or say the judge was fixed.
 
 ## Repair handoff
 
-The handoff is local and read-only. It records the source run, normalized evidence, the disagreement type, the owner class, the requested outcome, and the missing proof — then stays unresolved. A repair is complete only when the owning capability (loopkit skill or agent-ops) produces a repair receipt and a new terminal run with a different source hash is ingested.
+`repair-handoff <record-id>` prints a handoff with the source run, normalized evidence, disagreement type, owner class, requested outcome, and missing proof, with `handoff_status: unresolved` and `repair_performed: false`. Save it where the user asked. A repair is complete only when the owning capability (the `loopkit` skill or `agent-ops`) produces a repair receipt and a new terminal run with a different source hash is ingested.
 
-## Output Contract
+## When something goes wrong
 
-- Ingest returns: per-class counts (ingested / unchanged / duplicate / incomplete / corrupt) plus any error list.
-- Report returns: paths to the JSON and Markdown report files plus the headline metrics.
-- Audit returns: false-pass and false-failure record IDs, disagreement rate, exhausted run IDs, escalation clusters.
-- Missing evidence is reported as unknown, never filled in.
+| Symptom | Likely cause | Next move | Stop and ask when |
+|---|---|---|---|
+| `discovered: 0` | Wrong root, or runs lack `state.json` plus `contract.json`/`graph.json` | List the folder; fix `--loopkit-root` or register the right root once | the user has not named a root |
+| `corrupt` with a JSON error | Bad source file | Report the path and error; do not edit the source | never; sources are read-only |
+| `source changed during read` | A loop is still writing | Rerun ingest once after it finishes | it keeps changing |
+| Metric is `null` | Missing labels or cost evidence | Report it as unknown and say which runs lack what | never infer the value |
+| `repair-handoff` fails on an id | Id not in `runs/` | Take the id from `audit` or `$LOOP_OBSERVATORY_HOME/runs/` | never guess an id |
 
-## Operating Rules
+## Completion
 
-1. Source runs are read-only: never edit, repair, or relabel them; never infer missing labels, costs, or durations.
-2. Do not design, execute, schedule, or directly repair any loop here — route those to the loopkit skill or agent-ops.
-3. Keep observatory state under `$LOOP_OBSERVATORY_HOME`; leave source directories untouched (fingerprints prove this).
-4. Scheduled reporting is a cron job with user approval; never an endless shell loop and never a claim that Hatch runs plugin hooks.
-5. Ask the user before ingesting run roots they have not named or registered.
+- Ingest: per-class counts and the error list.
+- Report: JSON and Markdown report paths plus the headline metrics, with unknowns named.
+- Audit: false-pass and false-failure record ids, disagreement rate, exhausted run ids, escalation clusters.
+- Handoff: the saved unresolved handoff. Never claim a repair occurred.
+
+## Operating rules
+
+1. Source runs are read-only: never edit, repair, relabel, or infer labels, costs, or durations. The CLI hashes each source around the read and fails if it changes.
+2. Do not design, execute, schedule, or repair loops here.
+3. Keep observatory state under `$LOOP_OBSERVATORY_HOME`.
+4. Ask before ingesting run roots the user has not named or registered.

@@ -6,9 +6,8 @@ Detects the four capabilities a gauntlet run depends on:
 - filesystem read and write (tempfile probe)
 - command execution (subprocess echo probe)
 - network fetch (socket connect to a well-known host, only with --expect-network)
-- clean-context subagent spawning (--surface hatch or --surface claude-code
-  means true; --surface chat means false; otherwise heuristic: CLAUDECODE /
-  CLAUDE_CODE_* env means true, else "unknown", which maps to degraded)
+- clean-context subagent spawning (unknown until the host supplies actual
+  isolation evidence; a surface name or environment variable is not proof)
 
 Prints a machine-readable JSON result on stdout:
 
@@ -91,16 +90,8 @@ def detect_subagents(surface):
     Returns True, False, or "unknown". "unknown" maps to degraded because
     isolation the surface cannot confirm must never be claimed (SPEC 11.1).
     """
-    if surface == "hatch":
-        return True
-    if surface == "claude-code":
-        return True
     if surface == "chat":
         return False
-    if os.environ.get("CLAUDECODE"):
-        return True
-    if any(key.startswith("CLAUDE_CODE") for key in os.environ):
-        return True
     return "unknown"
 
 
@@ -113,7 +104,7 @@ def main(argv=None):
         "--surface",
         choices=["auto", "hatch", "claude-code", "cowork", "chat"],
         default="auto",
-        help="Surface hint. auto uses the environment heuristic (default).",
+        help="Surface hint. identifies the host, never certifies isolation.",
     )
     parser.add_argument(
         "--expect-network",

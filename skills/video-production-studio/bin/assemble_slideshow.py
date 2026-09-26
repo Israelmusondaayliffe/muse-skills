@@ -15,14 +15,17 @@ manifest.json:
     }
 
 motion is one of: static, zoom-in, zoom-out, pan-left, pan-right.
-Requires ffmpeg on PATH.
+Requires ffmpeg and ffprobe on PATH. Exits 3 when either is missing or an
+ffmpeg step fails, so the caller can report rendering as blocked.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -62,7 +65,20 @@ def main() -> int:
     parser.add_argument("-o", "--output", type=Path, required=True)
     args = parser.parse_args()
 
+    missing = [tool for tool in ("ffmpeg", "ffprobe") if shutil.which(tool) is None]
+    if missing:
+        print(f"blocked: {', '.join(missing)} not found on PATH", file=sys.stderr, flush=True)
+        return 3
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+    try:
+        return assemble(manifest, args)
+    except subprocess.CalledProcessError as exc:
+        print(f"blocked: ffmpeg step failed (exit {exc.returncode}): {' '.join(map(str, exc.cmd[:6]))} ...",
+              file=sys.stderr, flush=True)
+        return 3
+
+
+def assemble(manifest: dict, args: argparse.Namespace) -> int:
     width = int(manifest.get("width", 1920))
     height = int(manifest.get("height", 1080))
     fps = int(manifest.get("fps", 30))

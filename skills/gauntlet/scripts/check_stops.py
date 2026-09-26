@@ -5,13 +5,20 @@ Order, per SPEC 11.4:
   1. User stop           presence of a file named STOP in the run directory
   2. Piece converged     2 consecutive blind wins on a looping piece
   3. All pieces converged
-  4. Round cap per piece rounds_completed >= rounds_cap (default 10)
+  4. Round cap per piece rounds_completed >= rounds_cap (default 2)
   5. No-gain rule        same largest gap twice with no win (no_gain_streak >= 2):
                          escalate to lead for re-split, stop looping the piece
-  6. Wave cap            current_wave exceeds wave_cap (default 4)
-  7. Wall clock          open session elapsed >= wall_clock_hours_per_session (default 6)
-  8. Subagent cap        subagents_total >= subagent_cap_per_run (default 400)
-  9. Cost ceiling        cost_spent >= numeric cost_ceiling, when both are numeric
+  6. Wave cap            current_wave exceeds wave_cap (default 1)
+  7. Wall clock          open session elapsed >= wall_clock_hours_per_session (default 0.5)
+  8. Subagent cap        subagents_total >= subagent_cap_per_run (default 6)
+  9. Cost ceiling        cost_spent > cost_ceiling (0 allows no metered spend), or
+                         cost_spent >= a positive ceiling
+
+Before steps 2-9, the envelope must carry approved=true, a non-empty approval_ref,
+finite positive caps, a finite nonnegative cost_ceiling, and numeric usage in
+cost.json; otherwise the run pauses as budget-unverified. Pass --next-launches and
+--next-cost before every dispatch. These are cooperative gates: the script reads
+records the lead keeps; it cannot intercept tools or enforce account-wide spend.
 
 Caps set `capped` or `paused`. They never set `converged` or `done` (INV-7).
 Prints JSON {fired, condition, scope, action} on stdout and updates
@@ -22,15 +29,16 @@ Exit codes: 0 evaluated (fired or not), 1 validation failure, 2 usage error.
 
 import argparse
 import json
+import math
 import os
 import sys
 from datetime import datetime, timezone
 
 DEFAULT_BUDGETS = {
-    "rounds_cap_per_piece": 10,
-    "wave_cap": 4,
-    "wall_clock_hours_per_session": 6,
-    "subagent_cap_per_run": 400,
+    "rounds_cap_per_piece": 2,
+    "wave_cap": 1,
+    "wall_clock_hours_per_session": 0.5,
+    "subagent_cap_per_run": 6,
 }
 
 
@@ -66,10 +74,11 @@ def as_number(value):
     if isinstance(value, bool):
         return None
     if isinstance(value, (int, float)):
-        return float(value)
+        return float(value) if math.isfinite(value) else None
     if isinstance(value, str):
         try:
-            return float(value.strip())
+            parsed = float(value.strip())
+            return parsed if math.isfinite(parsed) else None
         except ValueError:
             return None
     return None
@@ -102,7 +111,11 @@ def main(argv=None):
         description="Evaluate gauntlet stop conditions in SPEC 11.4 order; first to fire wins.")
     parser.add_argument("--run-dir", required=True,
                         help="Path to .gauntlet/runs/<run-id>")
+    parser.add_argument("--next-launches", type=int, default=0, help="Proposed additional launches before dispatch")
+    parser.add_argument("--next-cost", type=float, default=0, help="Verified maximum incremental metered cost")
     args = parser.parse_args(argv)
+    if args.next_launches < 0 or args.next_cost < 0 or not math.isfinite(args.next_cost):
+        parser.error("proposed usage must be finite and nonnegative")
 
     run_dir = os.path.abspath(args.run_dir)
     run_path = os.path.join(run_dir, "run.json")
@@ -137,6 +150,37 @@ def main(argv=None):
         return emit(True, "user-stop", "run",
                     "stop the run; state intact and resumable")
 
+    # Authorization is recorded by the controller from the user's actual decision.
+    # This script checks records; it cannot authenticate the user or intercept tools.
+    problem = None
+    if budgets.get("approved") is not True or not isinstance(budgets.get("approval_ref"), str) or not budgets["approval_ref"].strip():
+        problem = "finite resource envelope has no recorded user approval"
+    for key in DEFAULT_BUDGETS:
+        number = as_number(budgets.get(key))
+        if number is None or number <= 0 or (key != "wall_clock_hours_per_session" and number != int(number)):
+            problem = "invalid resource limit: " + key
+        else:
+            budgets[key] = number
+    ceiling = as_number(budgets.get("cost_ceiling"))
+    if ceiling is None or ceiling < 0:
+        problem = "cost ceiling must be finite and nonnegative"
+    try:
+        cost = load_json(os.path.join(run_dir, "cost.json"))
+        spent = as_number(cost.get("cost_spent"))
+        launches = as_number(cost.get("subagents_total"))
+        if spent is None or launches is None or spent < 0 or launches < 0 or launches != int(launches):
+            problem = "usage is unknown or invalid; reconcile before continuing"
+    except (ValueError, OSError, AttributeError):
+        problem = "usage record is unavailable; reconcile before continuing"
+    if problem:
+        run.update(status="paused", stop_reason="budget-unverified")
+        save_json(run_path, run)
+        return emit(True, "budget-unverified", "run", problem)
+    if launches + args.next_launches > budgets["subagent_cap_per_run"] or spent + args.next_cost > ceiling:
+        run.update(status="paused", stop_reason="proposed-budget-exceeded")
+        save_json(run_path, run)
+        return emit(True, "proposed-budget-exceeded", "run", "reduce the proposed action or obtain a new envelope")
+
     # 2. Piece converged: 2 consecutive blind wins.
     for piece in pieces:
         if piece.get("status") == "looping" and as_int(piece.get("consecutive_wins"), 0) >= 2:
@@ -158,7 +202,8 @@ def main(argv=None):
     for piece in pieces:
         if piece.get("status") != "looping":
             continue
-        cap = as_int(piece.get("rounds_cap"), as_int(budgets.get("rounds_cap_per_piece"), 10))
+        cap = min(as_int(piece.get("rounds_cap"), budgets["rounds_cap_per_piece"]),
+                  budgets["rounds_cap_per_piece"])
         if as_int(piece.get("rounds_completed"), 0) >= cap:
             piece["status"] = "capped"
             save_json(pieces_path, pieces_doc)
@@ -178,7 +223,7 @@ def main(argv=None):
                         "escalate to the lead for a re-split; stop looping this piece")
 
     # 6. Wave cap: fires when the run would enter a wave beyond the cap.
-    wave_cap = as_int(budgets.get("wave_cap"), 4)
+    wave_cap = as_int(budgets.get("wave_cap"), DEFAULT_BUDGETS["wave_cap"])
     current_wave = as_int(run.get("current_wave"), 1)
     if current_wave > wave_cap:
         run["status"] = "paused"
@@ -204,7 +249,13 @@ def main(argv=None):
                 break
     if open_session is not None:
         entered = parse_ts(open_session.get("entered"))
-        if entered is not None:
+        if entered is None:
+            run["status"] = "paused"
+            run["stop_reason"] = "budget-unverified"
+            save_json(run_path, run)
+            return emit(True, "budget-unverified", "run",
+                        "open session has no valid entered timestamp; wall clock cannot be checked")
+        else:
             elapsed_hours = (now - entered).total_seconds() / 3600.0
             if elapsed_hours >= wall_limit:
                 run["status"] = "paused"
@@ -222,7 +273,7 @@ def main(argv=None):
             cost = load_json(cost_path)
         except (ValueError, OSError):
             cost = {}
-    subagent_cap = as_int(budgets.get("subagent_cap_per_run"), 400)
+    subagent_cap = as_int(budgets.get("subagent_cap_per_run"), DEFAULT_BUDGETS["subagent_cap_per_run"])
     subagents_total = as_number(cost.get("subagents_total"))
     if subagents_total is not None and subagents_total >= subagent_cap:
         run["status"] = "paused"
@@ -231,10 +282,10 @@ def main(argv=None):
         return emit(True, "subagent-cap", "run",
                     "pause the run; subagent cap reached; paused is not done")
 
-    # 9. Cost ceiling: fires only when both ceiling and spend are numeric.
+    # 9. Cost ceiling: numeric records were required above. Zero allows no metered spend.
     ceiling = as_number(budgets.get("cost_ceiling"))
     spent = as_number(cost.get("cost_spent"))
-    if ceiling is not None and spent is not None and spent >= ceiling:
+    if ceiling is not None and spent is not None and (spent > ceiling or (ceiling > 0 and spent >= ceiling)):
         run["status"] = "paused"
         run["stop_reason"] = "cost-ceiling"
         save_json(run_path, run)

@@ -8,7 +8,7 @@ Create a standalone HTML report from the final qualified prospect data. Use the 
 python3 ~/workspace/skills/founder-revenue-engine/scripts/generate_report.py analysis.json first-customer-report.html
 ```
 
-Save the report where the user will find it: `~/workspace/your_files/` for a user-facing document, or a goal's `files/` directory when it serves that goal. Keep the JSON in a work or temporary directory unless the user asks for raw data. Return a complete sandbox Markdown link to the HTML file in the final response.
+The generator overwrites its output path, so check the name first and use a new version (`first-customer-report-v2.html`) if it exists. Save the report where the user will find it: `~/workspace/your_files/` for a user-facing document, or a goal's `files/` directory when it serves that goal. Keep the JSON in a work or temporary directory unless the user asks for raw data. Return a complete sandbox Markdown link to the HTML file in the final response.
 
 ## JSON schema
 

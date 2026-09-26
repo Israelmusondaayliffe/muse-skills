@@ -14,11 +14,18 @@ CLI:
     python3 skill_eval_loop.py pin-baseline TARGET RUN_ID
     python3 skill_eval_loop.py stage TARGET
     python3 skill_eval_loop.py promote TARGET STAGED RUN_ID --approval APPROVED --expected-source-fingerprint FP
+    python3 skill_eval_loop.py state status|migrate [--from LEGACY_ROOT]
+
+State lives at ~/workspace/skill-eval-loop/state, outside the replaceable skill
+package (override with --state-root or SKILL_EVAL_LOOP_STATE). Earlier versions
+wrote to the package's own state/ directory; `state migrate` copies that forward
+and never deletes it.
 """
 
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import json
 import os
@@ -47,15 +54,173 @@ def run_id() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
+SKILL_DIR = Path(__file__).resolve().parent.parent
+STATE_ENV = "SKILL_EVAL_LOOP_STATE"
+LEGACY_ENV = "SKILL_EVAL_LOOP_LEGACY_STATE"
+MIGRATION_MARKER = "migrated-from.json"
+IGNORED_STATE_FILES = {MIGRATION_MARKER, ".state.lock"}
+
+
 def default_state_root() -> Path:
-    override = os.environ.get("SKILL_EVAL_LOOP_STATE")
+    """User state lives outside the replaceable skill package."""
+    return (Path.home() / "workspace" / "skill-eval-loop" / "state").resolve()
+
+
+def legacy_state_roots() -> list[Path]:
+    """In-package state roots written by earlier versions. Read only; never deleted."""
+    override = os.environ.get(LEGACY_ENV)
     if override:
-        return Path(override).expanduser().resolve()
-    return (Path.home() / "workspace" / "skills" / "skill-eval-loop" / "state").resolve()
+        return [Path(override).expanduser().resolve()]
+    candidates = [
+        SKILL_DIR / "state",
+        Path.home() / "workspace" / "skills" / "skill-eval-loop" / "state",
+    ]
+    unique: list[Path] = []
+    for item in candidates:
+        resolved = item.resolve()
+        if resolved not in unique:
+            unique.append(resolved)
+    return unique
+
+
+def state_files(root: Path) -> list[Path]:
+    if not root.is_dir():
+        return []
+    return sorted(
+        path for path in root.rglob("*")
+        if path.is_file() and path.relative_to(root).parts[0] not in IGNORED_STATE_FILES
+    )
+
+
+def tree_digest(root: Path) -> str | None:
+    """Content hash of a state tree, or None when it holds no records."""
+    files = state_files(root)
+    if not files:
+        return None
+    digest = hashlib.sha256()
+    for path in files:
+        digest.update(str(path.relative_to(root)).encode("utf-8") + b"\0")
+        digest.update(hashlib.sha256(path.read_bytes()).digest())
+    return digest.hexdigest()
+
+
+def state_status() -> dict[str, Any]:
+    """Report the active default state root, legacy roots, and any needed action."""
+    current = default_state_root()
+    current_digest = tree_digest(current)
+    marker = load_json(current / MIGRATION_MARKER) if (current / MIGRATION_MARKER).is_file() else {}
+    legacy = []
+    for root in legacy_state_roots():
+        digest = tree_digest(root)
+        if digest is None:
+            continue
+        migrated = digest == current_digest or (
+            marker.get("legacy_path") == str(root) and marker.get("legacy_digest") == digest
+        )
+        legacy.append({"path": str(root), "digest": digest, "migrated": migrated})
+    pending = [item for item in legacy if not item["migrated"]]
+    result: dict[str, Any] = {
+        "state_root": str(current),
+        "state_has_records": current_digest is not None,
+        "legacy_roots": legacy,
+    }
+    if current_digest is not None and pending:
+        result["active"] = str(current)
+        result["action"] = "conflict"
+        result["detail"] = (
+            "state and legacy records differ; commands are refused until the user picks one root "
+            "with --state-root. Nothing was merged, overwritten, or deleted."
+        )
+    elif current_digest is not None:
+        result["active"] = str(current)
+        result["action"] = "none"
+    elif len(pending) == 1:
+        result["active"] = pending[0]["path"]
+        result["action"] = "migrate"
+        result["detail"] = "run: python3 scripts/skill_eval_loop.py state migrate"
+    elif pending:
+        result["active"] = None
+        result["action"] = "conflict"
+        result["detail"] = "several legacy roots hold different records; run state migrate --from <path> for the one to keep"
+    else:
+        result["active"] = str(current)
+        result["action"] = "none"
+    return result
 
 
 def state_root(explicit: str | None) -> Path:
-    return Path(explicit).expanduser().resolve() if explicit else default_state_root()
+    """Resolve the state root: --state-root, then SKILL_EVAL_LOOP_STATE, then the default.
+
+    Every command that uses the default root writes to it, so unmigrated or conflicting
+    legacy in-package state stops the command instead of forking or overwriting it.
+    """
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+    state_home = os.environ.get(STATE_ENV)
+    if state_home:
+        return Path(state_home).expanduser().resolve()
+    status = state_status()
+    if status["action"] == "none":
+        return default_state_root()
+    raise LoopError(
+        f"state needs attention before writing ({status['action']}): "
+        f"{status.get('detail', '')} Legacy roots: {[item['path'] for item in status['legacy_roots']]}"
+    )
+
+
+def cmd_state(args: argparse.Namespace) -> dict[str, Any]:
+    if args.state_command == "status":
+        return state_status()
+    return migrate_state(getattr(args, "source", None))
+
+
+def migrate_state(source: str | None = None) -> dict[str, Any]:
+    """Copy one legacy state tree to the default root. Never deletes or overwrites."""
+    target = default_state_root()
+    if source:
+        legacy = Path(source).expanduser().resolve()
+    else:
+        pending = [item for item in state_status()["legacy_roots"] if not item["migrated"]]
+        if not pending:
+            return {"migrated": False, "reason": "no unmigrated legacy state", "state_root": str(target)}
+        if len(pending) > 1:
+            raise LoopError("several legacy roots differ; pass --from <path> to choose one")
+        legacy = Path(pending[0]["path"])
+    legacy_digest = tree_digest(legacy)
+    if legacy_digest is None:
+        return {"migrated": False, "reason": f"no legacy records at {legacy}", "state_root": str(target)}
+    if target.is_symlink():
+        raise LoopError(f"state root is a symlink; refusing to write through it: {target}")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with open(target.parent / ".state.lock", "a") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        current_digest = tree_digest(target)
+        if current_digest is not None and current_digest != legacy_digest:
+            raise LoopError(
+                f"state root already holds different records; nothing overwritten: {target} (legacy kept at {legacy})"
+            )
+        if current_digest is None:
+            staging = Path(tempfile.mkdtemp(prefix=".state.migrating.", dir=target.parent))
+            for path in state_files(legacy):
+                destination = staging / path.relative_to(legacy)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, destination)
+            if tree_digest(staging) != legacy_digest:
+                raise LoopError(f"copy verification failed; staged copy left at {staging}")
+            try:
+                os.rename(staging, target)  # fails if a non-empty state root appeared meanwhile
+            except OSError as error:
+                raise LoopError(f"state root changed during migration; staged copy left at {staging}: {error}") from error
+        atomic_json(target / MIGRATION_MARKER, {
+            "legacy_path": str(legacy), "legacy_digest": legacy_digest, "migrated_at": now(),
+        })
+    return {
+        "migrated": current_digest is None,
+        "reason": "copied" if current_digest is None else "already identical; marker recorded",
+        "state_root": str(target),
+        "legacy_path_kept": str(legacy),
+        "sha256": legacy_digest,
+    }
 
 
 def atomic_json(path: Path, payload: Any) -> None:
@@ -620,6 +785,12 @@ def parser() -> argparse.ArgumentParser:
     promote.add_argument("--expected-source-fingerprint", required=True)
     promote.add_argument("--state-root")
     promote.set_defaults(func=cmd_promote)
+    state = sub.add_parser("state", help="report or migrate legacy in-package state")
+    state_sub = state.add_subparsers(dest="state_command", required=True)
+    state_sub.add_parser("status", help="show the active state root and any legacy records")
+    migrate = state_sub.add_parser("migrate", help="copy legacy state to the default root; never deletes or overwrites")
+    migrate.add_argument("--from", dest="source", help="legacy state root to migrate when several exist")
+    state.set_defaults(func=cmd_state)
     return result
 
 

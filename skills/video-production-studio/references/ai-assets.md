@@ -1,6 +1,10 @@
 # AI-generated assets
 
-Use `media.generate_image` and `media.generate_video` for AI-created visuals.
+Use `media.generate_image` and `media.generate_video` for AI-created visuals
+only after confirming they appear in the current tool list. Generation may
+be billed: get the user's approval for the count and cost before the first
+call, and count retries against that approval. The call details below are
+from the port and unverified on the current host; check the tool schema.
 These run through a media subagent — pass the user's request text verbatim
 (one image/video per call, max four image calls per turn).
 

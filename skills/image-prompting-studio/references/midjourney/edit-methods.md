@@ -218,7 +218,7 @@ Use one target region or object per pass when exact count or placement matters.
 
 # Parameter safety
 
-Read `current-model-boundaries.md` for the retained dated control matrix and `../../../references/model-profiles.md` for current shared guidance. Preserve exact user-supplied settings, check live execution compatibility, and do not invent edit-strength controls.
+Read `current-model-boundaries.md` for the retained dated control matrix and `../model-profiles.md` for current shared guidance. Preserve exact user-supplied settings, check live execution compatibility, and do not invent edit-strength controls.
 
 # Output contract
 

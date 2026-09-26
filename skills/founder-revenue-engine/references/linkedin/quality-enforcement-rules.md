@@ -10,7 +10,7 @@ If a simpler word conveys the same meaning, use it. Not trying to sound smart. T
 
 "Use" beats "leverage." "Start" beats "commence." "Important" beats "pivotal." "Show" beats "showcase." "Get" beats "obtain." "Need" beats "require."
 
-Load `references/word-replacement-table.md` for the full Tier 1/2 replacement list with specific alternatives. Every Tier 1 word in a draft is a mandatory replacement. No debate.
+Load `references/linkedin/word-replacement-table.md` for the full Tier 1/2 replacement list with specific alternatives. Every Tier 1 word in a draft is a mandatory replacement. No debate.
 
 The principle behind the list: when you reach for the fancier word, ask why. If the answer is anything other than "it's the only precise option," use the simpler one.
 
@@ -106,7 +106,7 @@ BANNED. Use period or different structure.
 
 ## AI Pattern Taxonomy (V3 Addition)
 
-Patterns from Wikipedia's WikiProject AI Cleanup that are especially common in LinkedIn post drafts. Run `scripts/quality_validator.py` for automated detection. See `references/ai-pattern-taxonomy.md` for the full 24-pattern catalog.
+Patterns from Wikipedia's WikiProject AI Cleanup that are especially common in LinkedIn post drafts. Run `scripts/quality_validator.py` for automated detection. See `references/linkedin/ai-pattern-taxonomy.md` for the full 24-pattern catalog.
 
 ### Copula Avoidance (HIGH priority)
 LLMs write "serves as" instead of "is." Instantly detectable.
@@ -211,7 +211,7 @@ LLMs refer to the same thing by different names every sentence.
 
 12 additional patterns not in the core 24. These survive a vocabulary-only edit. The only way to catch them is to ask: does this sentence actually say something, or is it performing the act of saying something?
 
-Load `references/extended-patterns.md` for full examples and fixes.
+Load `references/linkedin/extended-patterns.md` for full examples and fixes.
 
 ### Novelty Inflation (P1)
 "He introduced a term nobody's naming." Most concepts already exist. Describe what the person *did with* the idea, not that they discovered it. Related: "what nobody tells you about," "the insight everyone's missing."

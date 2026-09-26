@@ -25,6 +25,8 @@ Plan version: 1
 ## 20. Multi-session continuity requirements
 ## 21. Approval boundaries
 ## 22. Resource envelope
+
+State finite values and get them approved with the plan: elapsed minutes, agent launches, max concurrency, critic rounds per workstream, and metered cost (0 unless the user names a ceiling). Unedited defaults from `gauntletctl.py init` are 30 minutes, 6 launches, concurrency 2, 2 critic rounds. Extensions need a new recorded approval. `gauntletctl.py usage` rejects a ledger over these limits; it cannot see launches the lead does not record, and it does not cap account-wide spend.
 ## 23. Acceptance criteria
 ## 24. Stop conditions
 ## 25. Open non-blocking questions

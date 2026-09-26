@@ -1,6 +1,6 @@
 ---
 name: "signal-to-system"
-description: "Turn knowledge, evidence, and repeated work into useful outcomes across ten workflows: rank messy ideas (curiosity-compass), scan current public signals (signal-scout), turn research into a decision record (research-to-decision-map), diagnose and redesign a recurring workflow (workflow-clinic), match an outcome to a person/tool/service with a handoff brief (capability-matcher-and-brief-builder), design a cheap falsifiable experiment with an append-only ledger (experiment-designer-and-ledger), build workshop deliverables (workshop-workbench), run a source-of-truth control pack for a creative project (creative-project-control-room), compound session notes into decisions and reusable material (session-compounder), or map proven work into a reusable product form (proof-to-product-mapper). Trigger on verbs like rank, scan, decide, test, workshop, facilitate, debrief, or productize."
+description: "Turn knowledge, evidence, and repeated work into useful outcomes through ten workflows: rank a messy idea pile (curiosity-compass), scan current public signals (signal-scout), turn research into a decision record (research-to-decision-map), redesign a recurring workflow (workflow-clinic), match a job to a person, tool, or service with a handoff brief (capability-matcher-and-brief-builder), design a cheap falsifiable test with an append-only ledger (experiment-designer-and-ledger), build workshop materials (workshop-workbench), run a creative project control pack (creative-project-control-room), compound session notes into decisions and reusable material (session-compounder), or map proven work to a product form (proof-to-product-mapper). Not for grill me or pressure-test interviews, or ranking, matching, or productizing framed as a pre-commitment decision (strategy-room), nor for filing sessions into workspace memory (continuity-vault)."
 ---
 
 # Signal to System
@@ -10,6 +10,18 @@ repeated work into useful outcomes. There is no fixed pipeline: pick the
 workflow that owns the user's job. Workflows may consume one another's
 artifacts (e.g. a scout snapshot feeding a decision map, an experiment
 ledger feeding productization).
+
+A workflow is finished when its artifact answers the user's actual decision or job, with evidence labels visible and the next action concrete. A search log, a criteria list, or a proposal to create outputs is not the finished artifact unless that is what was asked.
+
+## Start here
+
+1. **Open everything supplied** (notes, transcripts, lists, research) and note the date, completeness, and any stated constraints such as budget, hours, audience, or permissions.
+2. **Pick one workflow** from the table below, and check the ownership table under it. Say which workflow you chose in one line.
+3. **Run that workflow's procedure** below, using its template in `assets/` as a coverage check.
+4. **Search the web only when live facts could change the result** and the request allows it. A "don't search" instruction is binding; say which claims stay unverified.
+5. **Deliver the artifact** in the reply, or as a file when it is large or a location was named. Run the completion check in `references/evidence-and-artifact-policy.md` first.
+
+A direct request for named outputs counts as selection. Workshop Workbench and Session Compounder then build those outputs without a separate selection round. They pause to recommend and ask only when the user has not said what to produce.
 
 ## Route the request
 
@@ -27,6 +39,24 @@ ledger feeding productization).
 | Proven or promising work should become a reusable product | proof-to-product-mapper | compound |
 
 If the request doesn't match any row, say so instead of forcing a fit.
+
+### Ownership with adjacent skills
+
+Each row below has one terminal owner. Once a request lands in this skill,
+the selected workflow finishes it here; do not hand the same job to
+another skill and back.
+
+| Request | Owner |
+| --- | --- |
+| Rank a messy idea pile with no decision framed yet | here, curiosity-compass |
+| Rank options for a decision that already has an owner and stakes, or any grill me / pressure-test request | `strategy-room` |
+| Build a candidate shortlist and handoff brief for a job, or map proven work to a product form, when the user names this skill or wants the working artifact | here |
+| The same match or productize question framed as "should we commit, pressure-test it" | `strategy-room` |
+| Turn session notes into decisions, commitments, and reusable material | here, session-compounder |
+| File a session into durable workspace records or memory | `continuity-vault` |
+
+If a request still fits both owners, ask one question naming both, then
+proceed with the answer.
 
 ## Shared rules (all workflows)
 
@@ -114,9 +144,10 @@ Pass two (final record): selected option, rationale, confidence, accepted
 risks, rejected alternatives, unresolved evidence, review trigger, immediate
 next action. Preserve a different user choice without rewriting the evidence.
 Template: `assets/research-to-decision-template.md`. Further execution needs
-its own authority. Route person/tool/service selection to
-capability-matcher-and-brief-builder; evidence-grade tests to
-experiment-designer-and-ledger.
+its own authority. When the record's next action is choosing a person, tool,
+or service, or running an evidence-grade test, name
+capability-matcher-and-brief-builder or experiment-designer-and-ledger as the
+next action and stop; that follow-on runs as a new request.
 
 ### workflow-clinic — diagnose and redesign a recurring workflow
 
@@ -134,8 +165,9 @@ experiment-designer-and-ledger.
    Recommend tools only after the job and constraints are clear; search the
    web when current product capabilities affect the design.
 4. Outline the pilot: boundary, owner, baseline, success signal, stop
-   condition, rollback path, review date. Falsifiable predictions, sampling,
-   and a reusable ledger belong in experiment-designer-and-ledger.
+   condition, rollback path, review date. If the pilot needs falsifiable
+   predictions, sampling, and a reusable ledger, name
+   experiment-designer-and-ledger as the next action and stop there.
 5. Never implement integrations or change live systems without explicit
    authorization. Template: `assets/workflow-clinic-template.md`. Complete
    when another person can run the pilot and say why each step belongs to a
@@ -253,7 +285,8 @@ experiment-designer-and-ledger.
 3. Recommend outputs worth creating (decision record, action list, follow-up
    brief, FAQ, knowledge note, guide seed, workshop material, content brief,
    experiment). Rank by usefulness, evidence, audience, effort, sensitivity;
-   explain and ask the user which to create.
+   explain and ask the user which to create. A request that already names
+   the outputs counts as the selection.
 4. Produce only selected outputs. Never create for an audience broader than
    the recorded allowed audience. Prohibited reuse means no derivative.
    Unknown or restricted permission means no identifiable material in
@@ -288,6 +321,34 @@ experiment-designer-and-ledger.
    `assets/productization-brief-template.md`. Building, publishing, selling,
    or installing the product requires a separate request and authorization.
 
+## Worked example (illustrative, synthetic)
+
+Request: "Here's the transcript of our member interview session. Turn it into an FAQ for the public website."
+
+- Workflow: session-compounder. The output is named (a public FAQ), so no selection round is needed.
+- Extraction: six recurring questions with answers given by the host; one member's detailed story about leaving a job; one decision ("we'll pilot office hours"); two proposals that were not agreed.
+- Permission judgment: the transcript records consent for internal notes only, and nobody agreed to public reuse. The public FAQ can use the explanations given by the host, who is the user. The member's story is identifiable and has unknown public permission, so it stays out; there is no de-identification permission either. Leave a marked gap: "Story example pending member consent." The proposals are not presented as decisions.
+- Deliver: the FAQ draft marked as a proposal awaiting approval, a permissions table per reusable item, and the gap with its owner (host asks the member).
+
+A wrong version would quote the member's story, paraphrase it lightly and call it anonymous, present a proposal as a decision, or publish the FAQ.
+
+## When something goes wrong
+
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| No workflow row fits | The request belongs to another skill or is not a job here | Say so and name the owner from the ownership table | always; do not force a fit |
+| Web search fails or is not allowed | Access, rate limit, or instruction | Record the attempt in the search log; classify the scan `partial scan` or `unavailable` | the remaining claims cannot be made; say which |
+| Supplied evidence is too thin to rank or recommend | Early-stage ideas | Apply the viability floor; recommend zero and name the evidence that would make one viable | always a valid result |
+| Reuse permission is unknown | Consent not recorded | Leave identifiable material out of outward-facing outputs; mark the gap and its owner | never guess permission |
+| A step needs a logged-in or rendered page | Live-browser work | Follow operating rule 6 | the browser task is unavailable |
+| The user asks to send, publish, recruit, buy, or change a live system | External action | Prepare the artifact; stop at the action | the user gives explicit authorization for that action |
+
+## Completion
+
+- **Delivered:** the workflow's artifact with evidence labels, visible assumptions and gaps, and one concrete authorized next action.
+- **Delivered with limits:** the artifact plus named unverifiable claims (for example `partial scan`, or unknown permission).
+- **Not owned here:** a one-line statement naming the owning skill from the ownership table.
+
 ## Session hooks (checklists)
 
 The plugin had no portable hooks; the originals depended on Codex/Claude
@@ -307,6 +368,9 @@ host events. Translate them into checks run here:
 ## Operating rules
 
 1. Pick exactly one owning workflow per request; never blend procedures.
+   A workflow may name another as the next action. It does not start that
+   workflow in the same request unless the user asks, and the follow-on
+   never routes the job back.
 2. Templates in `assets/` are coverage checks, not rigid forms.
 3. Deliver a portable Markdown artifact in the response when reasonably
    sized; for large multi-file deliverables, save under `~/workspace/` and
@@ -317,5 +381,9 @@ host events. Translate them into checks run here:
 5. External writes, messages, purchases, publishing, and live-system changes
    always need explicit user authorization.
 6. When a step requires a logged-in site, a rendered/dynamic page, or a
-   form, delegate it to the parent for live-browser work instead of
-   pretending text fetching suffices.
+   form, text fetching does not suffice. If you are the main assistant, run
+   it as the host's live-browser task with the user's confirmation. If you
+   are a subagent, return that exact step (URL, what to check) to the
+   parent and finish the rest. If no live browser is available, mark the
+   claim `unchecked: needs live browser` in the artifact and stop that step.
+   Never loop the step between agents.

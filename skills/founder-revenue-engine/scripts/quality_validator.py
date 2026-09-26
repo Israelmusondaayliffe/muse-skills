@@ -17,7 +17,8 @@ Plus positive voice markers (bonuses):
 - Lowercase emphasis, fragments, contractions
 - Specific numbers, economic thinking, varied rhythm
 
-Scoring: 100-point system (deductions + bonuses).
+Scoring: advisory 100-point system (deductions + bonuses). Bonuses may offset
+pattern deductions. Neither the score nor exit 0 verifies claims, voice, or approval.
 
 Usage:
     python quality_validator.py <text>
@@ -308,15 +309,16 @@ def print_report(text, v, voice, rhythm, verbose=False):
     print("LINKEDIN QUALITY VALIDATION REPORT (V3)")
     print("=" * 60)
 
-    print(f"\nOVERALL SCORE: {score}/100")
+    print(f"\nADVISORY PATTERN SCORE: {score}/100")
+    print("This scanner does not verify facts, user voice, or publication approval.")
     if score >= 90:
-        print("✓ Excellent. Ship it.")
+        print("High heuristic score. Inspect any findings before delivery.")
     elif score >= 80:
-        print("⚠ Good. Minor tweaks recommended.")
+        print("Some pattern findings may need revision; judge them in context.")
     elif score >= 70:
-        print("⚠ Acceptable. Needs revision.")
+        print("Review the pattern findings against the brief.")
     else:
-        print("✗ Poor. Regenerate recommended.")
+        print("Many pattern findings. Inspect relevance before rewriting.")
 
     # Count total violations
     total_original = (
@@ -417,16 +419,16 @@ def print_report(text, v, voice, rhythm, verbose=False):
     if v['ai_cliches']:
         print("  -> Remove AI cliches and rewrite affected sections")
     if v['hedge_words'] and len(v['hedge_words']) > 3:
-        print("  -> Too much hedge language. Commit to clear stance.")
+        print("  -> Cut redundant hedges; preserve uncertainty required by the evidence.")
     if not voice['economic_thinking']:
-        print("  -> Add economic/structural insight (who pays? who wins?)")
+        print("  -> Discuss economic effects only when the brief and sources support them.")
     if not rhythm:
         print("  -> Vary sentence length. Mix short and long.")
     if not voice['lowercase_emphasis']:
-        print("  -> Add lowercase emphasis for personality")
+        print("  -> Use lowercase emphasis only if supplied voice examples support it.")
 
     if (total_original + total_v3) == 0 and score >= 85:
-        print("  No changes needed. Output is high quality.")
+        print("  No scanner flags. Claims, source fidelity and task completion remain unassessed.")
 
     print("=" * 60)
 

@@ -1,6 +1,6 @@
 ---
 name: "matt-partok-bundled-plugin-for-knowledge-work"
-description: "Run Matt Pocock's idea-to-ship knowledge-work flow: grill decisions one question at a time, model the domain, research or prototype unknowns, write a spec, slice it into tickets, implement slices with TDD, review, and hand off across sessions. Use when the user asks for Matt's workflow, says grill me, wants a decision clarified, needs a spec or tickets, wants bounded research, a prototype, a code review, bug diagnosis, or a structured learning program."
+description: "Run Matt Pocock's idea-to-ship knowledge-work flow (grilling, domain modeling, bounded research or prototype, spec, tickets, TDD slices, review, handoff, teaching). Explicit-only: use only when the user selects it by name, for example Matt, Matt Pocock, Matt's flow, the Matt Partok bundle, or a Matt-prefixed step such as Matt grill, Matt to spec, Matt to tickets, Matt TDD, Matt code review, Matt triage, Matt wayfinder, or Matt teach. Not for generic grill me, interview me, or pressure-test this decision requests (use strategy-room), nor for ordinary specs, tickets, research, reviews, or bug fixes that do not name Matt."
 ---
 
 # Knowledge-Work Flow (Matt Pocock bundle, adapted)
@@ -14,10 +14,33 @@ terminal assistant with file tools, web search, subagents, cron/hooks, and
 connected services. No Codex/Claude Code manifests, hooks, or slash commands —
 the "hook" moments below are checklists and procedures instead.
 
-Trigger this skill when the user explicitly invokes it ("use Matt's flow",
-"grill me", "wayfind this", "turn this into a spec/tickets", "run Matt TDD /
-code review / triage", "teach me via Matt teach"). Keep ordinary research,
-planning, and review out of it unless asked.
+Trigger this skill only when the user selects it by name ("use Matt's flow",
+"Matt grill me", "Matt wayfinder", "Matt to spec / tickets", "run Matt TDD /
+code review / triage", "teach me via Matt teach"). A generic "grill me",
+"interview me", or "pressure-test this decision" without Matt belongs to the
+`strategy-room` skill; ordinary research, planning, specs, and review stay out
+of this skill too. Once the user has selected Matt, run the requested step
+here to completion; do not hand it back to another skill.
+
+## Start here
+
+1. **Confirm the explicit selection and the step.** Name the Matt step the
+   user asked for (for example To tickets, Triage, TDD, Teach). If they asked
+   for "Matt's flow" with no step, start at the Main flow below.
+2. **Read the live state** that step needs: the spec, ticket files, or issue;
+   `CONTEXT.md` and `docs/adr/` when they exist; the repo's test command.
+   Missing domain docs are fine; proceed without them.
+3. **Use the configured tracker, or local Markdown by default**
+   (`references/issue-tracker-setup.md`). Setup is for a project about to run
+   the full flow; a single named step does not wait for it.
+4. **Run only that step's section** below, to its stated output. When a spec
+   or decision is already approved, do not re-grill it.
+5. **Report the artifact, the check you ran, and the next step** in the flow,
+   without starting that step unless asked.
+
+A named step with its inputs authorizes that step. A step that says "quiz the
+user" or "wait for direction" pauses once; if the user already pre-approved
+the result in the request, show it and continue.
 
 ## Main flow
 
@@ -390,6 +413,47 @@ alone), skills through interactive lessons with tight feedback loops
 high-reputation communities (respect an opt-out). Design for storage strength,
 not fluency. Knowledge lessons minimize difficulty; skill lessons use
 difficulty as the tool.
+
+## Worked example (illustrative, synthetic)
+
+Request: "Matt triage: issue 14 says CSV export drops the last row. Recommend
+what to do with it."
+
+- Step: Triage, read and recommend only. No labels change, and nothing is
+  posted.
+- Gather: read the issue and comments. Search the code for an existing fix and
+  check `.out-of-scope/` for a prior rejection. Neither is found.
+- Verify before grilling: reproduce with the reporter's steps on a 3-row
+  file. The export has 2 rows, so the bug is confirmed. A 1-row file exports
+  correctly, so the bug is narrower than reported, which matters for the
+  brief.
+- Recommend `bug` + `ready-for-agent`, with a draft agent brief. The brief
+  covers the behavior (every data row exported), acceptance criteria for 0,
+  1, 3, and 1,000-row files, and the boundary (the export format itself is
+  unchanged). It stays a draft until the maintainer authorizes posting.
+
+A wrong version would grill the reporter before trying to reproduce, change
+labels without authorization, or write a brief that names files and line
+numbers instead of behavior.
+
+## When something goes wrong
+
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| The user did not name Matt | Wrong skill | Say that generic interviews belong to `strategy-room` and other work to its own skill | always; do not run this bundle |
+| The spec has unresolved consequential decisions | Grilling incomplete | List them as blockers in the output; grill only those, one question at a time | the user defers or decides each one |
+| The test command or build fails before any change | Pre-existing breakage | Record the failing output as the baseline; do not fix it inside an unrelated slice | the slice depends on it; report it as a blocker |
+| A bug does not reproduce | Missing steps or environment | Try the reporter's exact steps once more with the stated versions; move to `needs-info` with specific questions | the second attempt fails |
+| A ticket cannot be demoed alone | Horizontal slice | Merge it into the vertical slice that uses it, or split along user-visible behavior | the maintainer accepts the new split |
+| The step would write to a tracker, commit, or post | External state | Prepare the content locally; stop | the task explicitly authorizes that action |
+
+## Completion
+
+- **Step done:** the step's artifact exists where the tracker convention puts
+  it, the step's check ran (tests, reproduction, validation of edges), and
+  the next flow step is named.
+- **Blocked:** the blocker, its owner, and what was completed without it.
+  Unresolved decisions are listed as blockers, never as hidden assumptions.
 
 ## Attribution
 

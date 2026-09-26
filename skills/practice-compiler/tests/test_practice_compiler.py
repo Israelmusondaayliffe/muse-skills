@@ -315,26 +315,113 @@ class PracticeCompilerTests(unittest.TestCase):
             self.assertFalse(errors)
             self.assertEqual("subagent", metadata["source_class"])
 
-    def test_default_state_root_lives_in_skill_hidden_files(self):
-        saved = os.environ.pop("PRACTICE_COMPILER_STATE", None)
-        try:
+    def test_default_state_root_lives_outside_skill_package(self):
+        with self._isolated_home() as home:
             default = MODULE.root_path(None)
-            self.assertEqual(
-                Path.home() / "workspace" / "skills" / "practice-compiler" / "hidden_files" / "state",
-                default,
-            )
-            self.assertFalse(str(default).startswith(str(Path.home() / ".codex")))
-        finally:
-            if saved is not None:
-                os.environ["PRACTICE_COMPILER_STATE"] = saved
-        with tempfile.TemporaryDirectory() as temp:
-            os.environ["PRACTICE_COMPILER_STATE"] = temp
-            try:
+            self.assertEqual((home / "workspace" / "practice-compiler" / "state").resolve(), default)
+            self.assertNotIn(MODULE.SKILL_DIR, default.parents)
+            with tempfile.TemporaryDirectory() as temp:
+                os.environ["PRACTICE_COMPILER_STATE"] = temp
                 self.assertEqual(Path(temp).resolve(), MODULE.root_path(None))
-            finally:
+
+    # ---- state relocation: legacy in-package state is kept, migrated, or reported ----
+
+    def _isolated_home(self, legacy=None):
+        """Point HOME (and optionally the legacy root) at a temp dir; restore afterwards."""
+        test = self
+
+        class Home:
+            def __enter__(self):
+                self.temp = tempfile.TemporaryDirectory()
+                self.saved = {key: os.environ.get(key) for key in ("HOME", "PRACTICE_COMPILER_STATE", "PRACTICE_COMPILER_LEGACY_STATE")}
+                os.environ["HOME"] = self.temp.name
                 os.environ.pop("PRACTICE_COMPILER_STATE", None)
-                if saved is not None:
-                    os.environ["PRACTICE_COMPILER_STATE"] = saved
+                if legacy is None:
+                    os.environ.pop("PRACTICE_COMPILER_LEGACY_STATE", None)
+                else:
+                    os.environ["PRACTICE_COMPILER_LEGACY_STATE"] = str(Path(self.temp.name) / legacy)
+                return Path(self.temp.name).resolve()
+
+            def __exit__(self, *exc):
+                for key, value in self.saved.items():
+                    if value is None:
+                        os.environ.pop(key, None)
+                    else:
+                        os.environ[key] = value
+                self.temp.cleanup()
+
+        return Home()
+
+    @staticmethod
+    def _write_records(root, proposal_id, status="staged"):
+        MODULE.atomic_json(root / "proposals" / f"{proposal_id}.json", {"proposal_id": proposal_id, "status": status})
+        MODULE.atomic_json(root / "cursor.json", {"schema_version": 2, "processed": {}})
+
+    def test_legacy_state_is_read_but_never_forked_before_migration(self):
+        with self._isolated_home(legacy="old-package/hidden_files/state") as home:
+            legacy = home / "old-package" / "hidden_files" / "state"
+            self._write_records(legacy, "pc-legacy")
+            status = MODULE.state_status()
+            self.assertEqual("migrate", status["action"])
+            self.assertEqual(legacy, MODULE.root_path(None))
+            with self.assertRaises(MODULE.CompilerError):
+                MODULE.root_path(None, write=True)
+            self.assertFalse((home / "workspace" / "practice-compiler" / "state").exists())
+
+    def test_migrate_copies_forward_and_keeps_legacy(self):
+        with self._isolated_home(legacy="old/state") as home:
+            legacy = home / "old" / "state"
+            self._write_records(legacy, "pc-legacy")
+            before = MODULE.tree_digest(legacy)
+            result = MODULE.migrate_state()
+            target = home / "workspace" / "practice-compiler" / "state"
+            self.assertTrue(result["migrated"])
+            self.assertEqual(before, MODULE.tree_digest(target))
+            self.assertEqual(before, MODULE.tree_digest(legacy))
+            self.assertTrue((legacy / "proposals" / "pc-legacy.json").exists())
+            self.assertEqual(target, MODULE.root_path(None, write=True))
+            # New writes after migration are not mistaken for a conflict.
+            self._write_records(target, "pc-new")
+            self.assertEqual("none", MODULE.state_status()["action"])
+
+    def test_conflict_is_reported_and_nothing_is_overwritten(self):
+        with self._isolated_home(legacy="old/state") as home:
+            legacy = home / "old" / "state"
+            target = home / "workspace" / "practice-compiler" / "state"
+            self._write_records(legacy, "pc-legacy")
+            self._write_records(target, "pc-current", status="approved")
+            legacy_before = MODULE.tree_digest(legacy)
+            target_before = MODULE.tree_digest(target)
+            status = MODULE.state_status()
+            self.assertEqual("conflict", status["action"])
+            self.assertEqual(target, MODULE.root_path(None))
+            with self.assertRaises(MODULE.CompilerError):
+                MODULE.root_path(None, write=True)
+            with self.assertRaises(MODULE.CompilerError):
+                MODULE.migrate_state()
+            self.assertEqual(legacy_before, MODULE.tree_digest(legacy))
+            self.assertEqual(target_before, MODULE.tree_digest(target))
+            # An explicit root is the user's resolution and is honored.
+            self.assertEqual(legacy, MODULE.root_path(str(legacy), write=True))
+
+    def test_identical_state_and_legacy_is_not_a_conflict(self):
+        with self._isolated_home(legacy="old/state") as home:
+            legacy = home / "old" / "state"
+            target = home / "workspace" / "practice-compiler" / "state"
+            self._write_records(legacy, "pc-same")
+            for path in MODULE.state_files(legacy):
+                destination = target / path.relative_to(legacy)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(path.read_bytes())
+            self.assertEqual("none", MODULE.state_status()["action"])
+
+    def test_default_legacy_location_under_workspace_skills_is_detected(self):
+        with self._isolated_home() as home:
+            legacy = home / "workspace" / "skills" / "practice-compiler" / "hidden_files" / "state"
+            self._write_records(legacy, "pc-installed")
+            status = MODULE.state_status()
+            self.assertEqual("migrate", status["action"])
+            self.assertIn(str(legacy), [item["path"] for item in status["legacy_roots"]])
 
     def test_preferred_handoff_owner_maps_to_hatch_workspace_skills(self):
         self.assertEqual("capability-operator", MODULE.preferred_handoff_owner("skill"))
@@ -348,13 +435,15 @@ class PracticeCompilerTests(unittest.TestCase):
     def test_approved_proposal_handoff_disclaims_destination_authority(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            (root / "sessions").mkdir()
+            # A "fixtures" path part keeps the copies classified synthetic on every
+            # platform; the window matches test_stdout_mode_is_read_only.
+            (root / "fixtures").mkdir()
             for name in ("session-a.jsonl", "session-b.jsonl"):
-                (root / "sessions" / name).write_text((self.fixtures / name).read_text(encoding="utf-8"))
+                (root / "fixtures" / name).write_text((self.fixtures / name).read_text(encoding="utf-8"))
             scan_args = type("Args", (), {
-                "sessions_root": [str(root / "sessions")], "limit": 20,
+                "sessions_root": [str(root / "fixtures")], "limit": 20,
                 "min_occurrences": 2, "scan_id": "s1", "state_root": str(root / "state"),
-                "source_class": ["synthetic"], "since": None, "until": None, "stdout": False,
+                "source_class": ["synthetic"], "since": "2020-01-01", "until": "2030-01-01", "stdout": False,
                 "timezone": "UTC",
             })()
             MODULE.cmd_scan(scan_args)

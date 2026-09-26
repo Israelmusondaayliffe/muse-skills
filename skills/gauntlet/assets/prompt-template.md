@@ -22,4 +22,4 @@ Write all state to {{run_dir}} after every round.
 
 Keep the live progress page at {{run_dir}}/workbench.html regenerated from state after every round.
 
-Use subagents freely and work at the highest effort setting. For runs that span days, pace rounds with a scheduled cron job; the round loop always owns the gauntlet, never the scheduler.
+Use subagents within the approved launch cap and work at the highest effort setting the user selected. Before each dispatch, run check_stops.py with the proposed launches and cost; a fired stop pauses the run. Any scheduled job needs its own explicit user approval; the round loop always owns the gauntlet, never the scheduler.

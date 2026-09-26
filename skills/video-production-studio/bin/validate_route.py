@@ -12,7 +12,13 @@ ROUTES = {
 }
 # Production surfaces actually available on Hatch.
 RUNTIMES = {"ffmpeg", "ai-generation", "browser-capture", "hybrid", "external", "none"}
-COMPLETION_STATES = {"planning-complete", "rendered-delivery-complete"}
+# planning-complete: a plan was requested and delivered.
+# rendered-delivery-complete: every requested element is in an inspected render.
+# rendered-partial: a render exists but a requested element (audio, captions,
+#   an asset, the size or length) is missing; list it in missing_requirements.
+# blocked: a clip was requested and no usable render exists.
+COMPLETION_STATES = {"planning-complete", "rendered-delivery-complete", "rendered-partial", "blocked"}
+DELIVERABLES = {"clip", "plan"}
 PLANNING_ARTIFACTS = {
     "video-brief.md", "storyboard.md", "shot-list.md", "asset-ledger.md",
     "runtime-requirements.md", "delivery-checklist.md",
@@ -59,9 +65,32 @@ def main() -> int:
         errors.append("an unavailable renderer requires runtime none")
     if renderer_available is True and runtime in NO_RENDERER_RUNTIMES:
         errors.append("runtime none cannot claim an available renderer")
+    deliverable = data.get("requested_deliverable")
+    missing = data.get("missing_requirements")
+    if deliverable not in DELIVERABLES:
+        errors.append("requested_deliverable must be clip or plan")
+    if not isinstance(missing, list) or not all(isinstance(i, str) and i.strip() for i in missing):
+        errors.append("missing_requirements must be a list of non-empty strings")
+        missing = []
+    if deliverable == "plan" and completion_state != "planning-complete":
+        errors.append("a requested plan ends in planning-complete")
+    if deliverable == "clip" and completion_state == "planning-complete":
+        errors.append("a plan cannot fulfill a requested clip; use rendered-partial or blocked")
     if completion_state == "planning-complete":
         if rendering_status != "incomplete" or visual_qc_status != "incomplete":
             errors.append("planning-complete requires rendering and visual QC to remain incomplete")
+    if completion_state == "rendered-delivery-complete" and missing:
+        errors.append("rendered-delivery-complete requires no missing requirements; use rendered-partial")
+    if completion_state == "rendered-partial":
+        if rendering_status != "complete" or renderer_available is not True:
+            errors.append("rendered-partial requires a completed render")
+        if not missing:
+            errors.append("rendered-partial must list the missing requirements")
+    if completion_state == "blocked":
+        if rendering_status == "complete":
+            errors.append("blocked cannot have a completed render; use rendered-partial")
+        if not missing:
+            errors.append("blocked must list what is missing or blocking")
     if completion_state == "rendered-delivery-complete":
         if renderer_available is not True:
             errors.append("rendered-delivery-complete requires an available renderer")
@@ -80,7 +109,9 @@ def main() -> int:
     for field in ("objective", "rationale"):
         if not isinstance(data.get(field), str) or not data[field].strip():
             errors.append(f"{field} must be non-empty")
-    print(json.dumps({"valid": not errors, "errors": errors}, indent=2))
+    print(json.dumps({"valid": not errors, "errors": errors,
+                      "completion_state": completion_state,
+                      "missing_requirements": missing}, indent=2))
     return 1 if errors else 0
 
 

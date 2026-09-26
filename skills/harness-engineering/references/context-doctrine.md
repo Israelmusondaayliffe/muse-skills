@@ -2,38 +2,43 @@
 
 <!-- context-scan: catalogue -->
 
-The default failure mode of an inherited harness is over-constraint, not absence. Newer models follow less universal coaching; user policy, authority boundaries, source precedence, and completion criteria remain load-bearing until a controlled subtraction test proves otherwise.
+Inherited setups often carry stale or conflicting instructions. They can also lack the guidance, examples, and checks a task needs. Judge each line by observed performance on the tasks it serves, not by its length or age. User policy, authority boundaries, source precedence, and completion criteria stay load-bearing until a controlled subtraction test shows otherwise (`references/prompt-governance.md`).
 
-## The reversals
+## What tends to help, and when
 
-Each was once correct for weaker models. Each is now a liability.
+1. Judgment over rule walls. Hard rules written for worst cases can conflict, and the model spends effort resolving the clash. Where rules conflict, describe the wanted shape and the condition that changes the choice.
+2. Examples beside the task that needs them. A short worked example that shows the quality bar and a real judgment call often teaches more than a paragraph of rules. Keep examples task-owned, clearly labeled as illustrative, and varied enough that the model does not copy one surface form. Cut an example only when a comparison shows it narrows output or no longer matches the task.
+3. Progressive disclosure. Load detail at the moment a task needs it, through a directly linked reference, instead of one central file of everything.
+4. Single placement. State a rule once, in its closest owner. Tool guidance belongs in the tool description.
+5. One memory owner. If the host has a memory system, instruction files should not duplicate it.
+6. Rich specs where they exist. An artifact, test suite, rubric, or function can be the spec. Source content beats a description of it.
 
-1. Rules to judgement. Hard rules written to prevent worst cases now conflict with each other, and the model spends reasoning resolving the clash. Describe the wanted shape instead.
-2. Examples to interface design. Worked examples constrain the model to the example's exploration space. Spend the effort on contracts, names, and thresholds.
-3. Upfront to progressive disclosure. Build a tree that loads at the right time, not a central repository of everything. Applies to instruction files, skills, and tools.
-4. Repetition to single placement. Tool guidance belongs in the tool description, once.
-5. Manual memory to auto-memory. The model saves relevant memories itself; instruction files should not duplicate the memory system.
-6. Simple specs to rich references. A spec can be an artifact, a test suite, a rubric, or a function in the codebase. Source content beats a description of it.
+## Verification and checks
 
-## Model supplements
+Keep checks that catch real failures. A task-specific check tied to evidence (render the file, run the test, compare the hash, read the output against the brief) is load-bearing and stays. Completion criteria and acceptance checks are user policy.
 
-- Subtract first. Every legacy behavioral instruction is presumed removable and earns its place back only by measured regression. Report every subtraction, or the user adds it back.
-- Reasoning echo is banned. Any instruction to show thinking, explain reasoning in the response, or transcribe a thought process risks refusal-classifier behavior. Reasoning visibility goes through structured means, never echoed prose.
-- Verification instructions come out. Explicit verify, double-check, and re-verify instructions cause over-verification and cost tokens with no quality gain.
+What to cut or rewrite is generic repetition: several "double-check everything" reminders stacked in one file, instructions to re-verify unchanged state, or a verification ritual that observed runs show adds cost with no caught failures. Replace those with one concrete check named against the task's evidence. When unsure, keep the check and test its removal.
+
+## Other supplements
+
+- Test subtractions, do not presume them. A legacy instruction is a removal candidate, not a removal. Remove one coherent group, compare against a frozen baseline, and restore it on regression. Report every subtraction, or the user adds it back.
+- Ask for conclusions and evidence, not transcribed reasoning. Some models refuse or degrade when told to echo hidden reasoning. Put reasoning visibility in structured fields (decision, evidence, alternative considered).
 - Calibrate rather than prescribe. Response length, narration cadence, document length, scope, and delegation each get one short positive statement of the wanted shape.
-- Deprune on sight: enumerated behaviour lists, anti-laziness language, forced interim summaries, aggressive subagent authorisation, capitalised emphasis, tool-triggering pressure, code-review recall workarounds.
-- Fix order when behavior is wrong: change effort or infrastructure, then remove something, then add one targeted line, then restructure. Restructure last.
+- Review on sight: enumerated behavior lists, anti-laziness language, forced interim summaries, aggressive subagent authorization, capitalized emphasis, tool-triggering pressure. Each is a candidate for rewrite or a removal test.
+- Fix order when behavior is wrong: check inputs, effort, and infrastructure first; then remove a conflicting or stale line; then add one targeted line, check, or example; then restructure. Restructure last.
 
 ## What must not be cut
 
-The argument is that instructions compensating for model weakness should go. It is not an argument that user policy should go. Keep, and where possible move down the reliability ladder into scripts:
+The argument is that instructions compensating for a weakness the current model no longer shows can go, after a test. It is not an argument that user policy, useful examples, or real checks should go. Keep, and where possible move down the reliability ladder into scripts:
 
 - Voice, tone, and banned-pattern rules.
 - Brand and visual constraints.
 - Output path, naming, and versioning discipline.
-- Fabrication bans covering numbers, metrics, sources, tool parameters, and skill behaviour.
+- Fabrication bans covering numbers, metrics, sources, tool parameters, and skill behavior.
 - Data routing rules, such as which connector owns which question.
 - Authority boundaries and approval gates.
+- Completion criteria and task-specific acceptance checks.
+- Worked examples that observed runs show improve output.
 
 An instruction encoding genuine user policy rather than model compensation stays, and the audit says so explicitly rather than deleting it silently.
 
@@ -41,11 +46,13 @@ An instruction encoding genuine user policy rather than model compensation stays
 
 For any line in any persistent file, in order:
 
-1. Would the current model do this correctly without the line? Cut it.
-2. Does it exist only to compensate for an older model's weakness? Cut it.
-3. Does it ask for reasoning to be echoed? Cut it, no exceptions.
-4. Is it a verification or double-check instruction outside a long-horizon autonomous run? Cut it.
-5. Is it a prohibition that could be a positive description of the wanted shape? Rewrite it.
+1. Does it encode user policy, taste, an authority boundary, a completion criterion, or a real gotcha? Keep it, and consider a script.
+2. Is it a task-specific check or example that observed runs show catches failures or raises quality? Keep it beside the task.
+3. Does it conflict with another line, or describe a path, tool, or fact that is no longer true? Fix or cut it.
+4. Is it a generic reminder that repeats a check already stated once? Collapse it to the one concrete check.
+5. Does it ask for hidden reasoning to be echoed? Rewrite it as a structured evidence field.
 6. Is it detail only some tasks need? Move it behind progressive disclosure.
 7. Is it visible from the file system or obvious from the workspace? Cut it.
-8. Does it encode user policy, taste, or a real gotcha? Keep it, and consider a script.
+8. Does it exist only to compensate for an older model's weakness? Mark it a removal candidate and test the removal before cutting.
+
+Report each cut with its evidence (conflict, stale fact, duplicate, or a subtraction test result). A cut without evidence is a proposal, not a finding.

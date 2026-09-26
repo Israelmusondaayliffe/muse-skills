@@ -57,9 +57,10 @@ Load `references/linkedin/quality-enforcement-rules.md` and enforce:
 7. **Fabrication validation** — all facts from the user.
 8. **Run the quality scripts:**
    ```bash
-   python3 scripts/quality_validator.py --file draft.txt --verbose
-   python3 scripts/emdash_replacer.py --file draft.txt
+   python3 scripts/quality_validator.py --file "$OUT/draft.txt" --verbose
+   test -e "$OUT/draft.clean.txt" && echo "draft.clean.txt exists; pick a new name" || python3 scripts/emdash_replacer.py "$OUT/draft.txt" "$OUT/draft.clean.txt"
    ```
+   Run from this skill's directory with drafts in your working folder `$OUT`. The validator scores style only; a perfect score does not check facts, so the fabrication check above still applies.
 
 ### Phase 6: Multi-option delivery
 

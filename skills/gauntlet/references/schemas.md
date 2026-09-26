@@ -28,13 +28,25 @@ piece.
   "status": "briefed",
   "created": "2026-09-23T14:00:00Z",
   "plan_hash": "sha256:...",
-  "precheck": {"result": "full", "subagents": true, "filesystem": true, "command_execution": true, "network": true},
-  "context_isolation": "clean",
-  "budgets": {"rounds_cap_per_piece": 10, "wave_cap": 4, "wall_clock_hours_per_session": 6, "subagent_cap_per_run": 400, "cost_ceiling": "user-set"},
+  "precheck": {"result": "degraded", "subagents": "unknown", "filesystem": true, "command_execution": true, "network": null},
+  "context_isolation": "degraded",
+  "budgets": {"rounds_cap_per_piece": 2, "wave_cap": 1, "wall_clock_hours_per_session": 0.5, "subagent_cap_per_run": 6, "cost_ceiling": 0, "approved": true, "approval_ref": "CONTEXT.md 2026-09-23 user approved 6 launches, 0 metered spend"},
   "current_wave": 1,
   "stop_reason": null
 }
 ```
+
+`init_run.py` writes the defaults shown above with `"approved": false`,
+`"approval_ref": null`, and `"context_isolation": "unknown"`. The lead sets
+`approved` and `approval_ref` only after the user accepts the stated envelope;
+`approval_ref` points at the recorded decision. `check_stops.py` pauses the run as
+`budget-unverified` while approval is missing, any cap is not a finite positive
+number, `cost_ceiling` is not a finite nonnegative number, or `cost.json` usage is
+unknown, negative, or non-numeric. `cost_ceiling: 0` allows no metered spend. A
+piece's `rounds_cap` is clamped to `rounds_cap_per_piece`. These are cooperative
+gates over records the lead keeps; they do not intercept tools or cap account-wide
+spend. `context_isolation` is `clean` only when the lead has recorded host evidence
+of isolation; a surface or model name is not evidence.
 
 `status` closed set: `briefed`, `prompted`, `running`, `paused`, `stopped`,
 `converged`, `verifying`, `verified`, `failed`, `unverifiable`, `reported`.
@@ -62,8 +74,8 @@ piece.
     "acceptance": "Blind critic picks ours over the reference in 2 consecutive rounds, and reader-proxy answers both questions without guessing.",
     "verifiers": {"quality": 3, "integrity": 3},
     "status": "looping",
-    "rounds_completed": 3,
-    "rounds_cap": 10,
+    "rounds_completed": 1,
+    "rounds_cap": 2,
     "consecutive_wins": 0,
     "last_gap": "Second paragraph restates the first at lower density.",
     "no_gain_streak": 1

@@ -50,7 +50,8 @@ Step 3.
 
 Fill each frame: kinetic-typography treatment, template, or motion-graphic
 combo (references/motion-graphics.md); weave user images in with
-beat-cut / Ken Burns on the grid. Present the plan; get approval.
+beat-cut / Ken Burns on the grid. Share the plan with the build; wait for
+approval only if the user asked to review it first.
 
 ## Step 4 — Build and assemble
 

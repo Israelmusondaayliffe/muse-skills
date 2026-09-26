@@ -1,1 +1,160 @@
-{"$schema":"https://json-schema.org/draft/2020-12/schema","properties":{"allowed_roots":{"items":{"type":"string"},"minItems":1,"type":"array"},"approval_groups":{"items":{"type":"string"},"type":"array"},"operations":{"items":{"properties":{"action":{"enum":["create","update","delete"]},"approval_group":{"type":"string"},"content":{"type":"string"},"expected_sha256":{"type":["string","null"]},"id":{"type":"string"},"target":{"type":"string"}},"required":["id","action","target","approval_group"],"type":"object"},"type":"array"},"outcome":{"properties":{"before_state":{"minLength":1,"type":"string"},"expected_primary_outputs":{"minimum":1,"type":"integer"},"primary_metric":{"minLength":1,"type":"string"},"target_state":{"minLength":1,"type":"string"},"unresolved_before":{"minimum":0,"type":"integer"},"unresolved_target":{"minimum":0,"type":"integer"}},"required":["primary_metric","before_state","target_state","unresolved_before","unresolved_target","expected_primary_outputs"],"type":"object"},"resource_budget":{"properties":{"cost_warning":{"type":["string","null"]},"high_cost_approved":{"type":"boolean"},"max_low_yield_waves":{"const":1},"max_support_artifacts":{"maximum":12,"minimum":0,"type":"integer"},"max_task_launches":{"maximum":24,"minimum":0,"type":"integer"},"max_verification_passes":{"const":1}},"required":["max_task_launches","max_support_artifacts","max_verification_passes","max_low_yield_waves","high_cost_approved","cost_warning"],"type":"object"},"run_id":{"minLength":1,"type":"string"},"schema_version":{"const":1},"support_artifacts":{"items":{"type":"string"},"type":"array","uniqueItems":true}},"required":["schema_version","run_id","allowed_roots","approval_groups","outcome","resource_budget","support_artifacts","operations"],"title":"Harness operations plan","type":"object"}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "allowed_roots": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "approval_groups": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "operations": {
+      "items": {
+        "properties": {
+          "action": {
+            "enum": [
+              "create",
+              "update"
+            ]
+          },
+          "approval_group": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "expected_sha256": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "target",
+          "approval_group"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "outcome": {
+      "properties": {
+        "before_state": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "expected_primary_outputs": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "primary_metric": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "target_state": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "unresolved_before": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "unresolved_target": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "primary_metric",
+        "before_state",
+        "target_state",
+        "unresolved_before",
+        "unresolved_target",
+        "expected_primary_outputs"
+      ],
+      "type": "object"
+    },
+    "resource_budget": {
+      "properties": {
+        "cost_warning": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "high_cost_approved": {
+          "type": "boolean"
+        },
+        "max_low_yield_waves": {
+          "const": 1
+        },
+        "max_support_artifacts": {
+          "maximum": 12,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_task_launches": {
+          "maximum": 24,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_verification_passes": {
+          "const": 1
+        }
+      },
+      "required": [
+        "max_task_launches",
+        "max_support_artifacts",
+        "max_verification_passes",
+        "max_low_yield_waves",
+        "high_cost_approved",
+        "cost_warning"
+      ],
+      "type": "object"
+    },
+    "run_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "support_artifacts": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "allowed_roots",
+    "approval_groups",
+    "outcome",
+    "resource_budget",
+    "support_artifacts",
+    "operations"
+  ],
+  "title": "Harness operations plan",
+  "type": "object"
+}

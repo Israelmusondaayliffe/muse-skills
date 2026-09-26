@@ -87,6 +87,8 @@ def main() -> int:
     parser.add_argument("video", type=Path)
     parser.add_argument("--min-width", type=int)
     parser.add_argument("--min-height", type=int)
+    parser.add_argument("--width", type=int, help="exact required width in pixels")
+    parser.add_argument("--height", type=int, help="exact required height in pixels")
     parser.add_argument("--min-duration", type=float)
     parser.add_argument("--max-duration", type=float)
     parser.add_argument("--require-audio", action="store_true")
@@ -108,6 +110,8 @@ def main() -> int:
         "readable": probe["readable"],
         "min_width": args.min_width is None or (isinstance(width, int) and width >= args.min_width),
         "min_height": args.min_height is None or (isinstance(height, int) and height >= args.min_height),
+        "width": args.width is None or width == args.width,
+        "height": args.height is None or height == args.height,
         "min_duration": args.min_duration is None or (duration is not None and duration >= args.min_duration),
         "max_duration": args.max_duration is None or (duration is not None and duration <= args.max_duration),
         "audio": not args.require_audio or audio_streams > 0,

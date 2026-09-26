@@ -8,13 +8,13 @@ record the result.
 
 ```bash
 python3 <SKILL_DIR>/bin/inspect_delivery.py renders/final.mp4 \
-  --min-width 1920 --min-height 1080 \
+  --width 1920 --height 1080 \
   --min-duration 28 --max-duration 32 \
   --require-audio --output renders/qc-technical.json
 ```
 
-`inspect_delivery.py` uses ffprobe (falls back to macOS `mdls`, which will
-not exist on this Linux VM — ffprobe is the real path). It checks the file
+`inspect_delivery.py` uses ffprobe (with a macOS `mdls` fallback that a
+Linux host will not have). Pass `--width`/`--height` for exact dimensions. It checks the file
 is readable, dimensions, duration bounds, and audio presence, and exits
 non-zero on failure. If ffprobe cannot read the file, report technical
 verification as **blocked**, not passed.

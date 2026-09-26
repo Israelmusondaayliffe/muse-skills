@@ -87,7 +87,7 @@ continuity-sensitive work.
 
 ## 8. Prompt packet
 
-Run `python3 ../bin/film_advisor.py shot <shot_record.json> <model_id>`
+From the skill folder, run `python3 bin/film_advisor.py shot <shot_record.json> <model_id>`
 to build a complete model-neutral `PromptPacket.json`: asset references with
 positive/negative controls, geography lock, first-frame intent, timed action
 beats, performance, camera, lens, light, physics, dialogue, sound, constraints,

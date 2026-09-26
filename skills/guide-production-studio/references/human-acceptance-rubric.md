@@ -24,6 +24,8 @@ Unfamiliar terms are explained at first use without reducing the subject's depth
 
 The reader can follow the steps, identify inputs, recognize expected results, and find the next decision.
 
+For runnable examples, read the displayed code, then run it with `scripts/check_guide_example.py --workdir-arg` for a normal case, an exercised collision case, and a malformed-input case (see `executable-examples.md`). The helper is not a sandbox. Record the reports as gate evidence.
+
 ### 5. Evidence
 
 Important claims, methods, examples, prompts, and results match inspected sources and accurate run status.
@@ -60,6 +62,9 @@ Any of these blocks approval:
 - Visual subject presented as complete without visual evidence
 - Quick start cannot be attempted from the guide
 - Internal skill, subagent, validator, routing, or publication commentary appears publicly
+- A runnable example can overwrite, move, or delete a file that existed before it ran, in setup, output, or recovery
+- Displayed code differs from the code that was run, or the text claims output or reporting the displayed code does not produce
+- A runnable example was not exercised for its collision and malformed-input cases (see `executable-examples.md`) before being called usable
 
 ## Cold-reader observation
 

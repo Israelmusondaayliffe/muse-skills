@@ -4,14 +4,13 @@
 Read-only. Reports findings; never edits a source file. See
 references/context-doctrine.md for the audit test behind these patterns.
 
-Read-only. Reports findings; never edits a source file.
-
 Usage:
     python3 context_scan.py PATH [PATH ...] [--json OUT.json] [--long-run]
 
 PATH may be a file or a directory. Directories are walked for .md files.
-Pass --long-run to downgrade verification findings for a long-horizon autonomous
-run, where the doctrine still permits fresh-context verifier subagents.
+Verification and example findings are review items, not removals: the doctrine keeps
+task-specific checks and examples that observed runs support. Pass --long-run to
+downgrade verification findings further for a long-horizon autonomous run.
 
 A file whose first 20 lines contain the HTML comment "context-scan: catalogue" is
 exempt from the line rules, because a catalogue documents the patterns it bans. A
@@ -32,7 +31,7 @@ FAIL, WARN, INFO = "FAIL", "WARN", "INFO"
 LINE_RULES = {
     "reasoning-echo": (
         FAIL,
-        "Risks the reasoning extraction refusal classifier. Use structured thinking blocks or a send-to-user tool.",
+        "Some models refuse or degrade when asked to echo hidden reasoning. Ask for conclusions and evidence in structured fields.",
         [
             r"show\s+your\s+(?:thinking|reasoning|thought\s+process|work)\b",
             r"explain\s+your\s+(?:internal\s+)?reasoning\s+in\s+(?:your|the)\s+(?:response|answer|output)",
@@ -43,8 +42,8 @@ LINE_RULES = {
         ],
     ),
     "verification-instruction": (
-        FAIL,
-        "Claude 5 models verify and self-correct unprompted. Added instructions cause over-verification.",
+        WARN,
+        "Generic self-check reminders can add cost without catching failures. Keep a check that names task evidence; collapse repeated generic reminders into it.",
         [
             r"final verification step",
             r"(?:verify|verifying|re-?verify)\s+(?:your|the|its)\s+(?:own\s+)?work",
@@ -58,7 +57,7 @@ LINE_RULES = {
     ),
     "anti-laziness": (
         WARN,
-        "Compensates for 4.x early stopping. Residue now causes over-elaboration.",
+        "Often written for older models' early stopping. Can cause over-elaboration; test before removing.",
         [
             r"\bbe thorough\b",
             r"do\s*n[o']t\s+stop\s+early",
@@ -82,7 +81,7 @@ LINE_RULES = {
     ),
     "forced-summary": (
         WARN,
-        "Compensates for 4.x opacity. Progress updates are a good default now.",
+        "Often written for older models' opacity. Test whether progress updates happen without it.",
         [
             r"summar\w+\s+every\s+\d+",
             r"after\s+every\s+\d+\s+tool\s+calls",
@@ -91,7 +90,7 @@ LINE_RULES = {
     ),
     "subagent-pressure": (
         WARN,
-        "Compensates for 4.7 under-spawning. Keep only when-appropriate guidance.",
+        "Often written for older models' under-delegation. Keep only when-appropriate guidance.",
         [
             r"spawn\s+(?:multiple|several|many)\s+subagents",
             r"always\s+use\s+(?:a\s+)?subagents?",
@@ -167,7 +166,9 @@ def scan_text(path: Path, text: str, long_run: bool) -> list[dict]:
                             "severity": reported,
                             "text": line.strip()[:160],
                             "reason": note,
-                            "action": "remove" if reported == FAIL else "confirm, then remove if instructive",
+                            "action": ("review; keep if task-specific and supported by observed runs"
+                                       if category == "verification-instruction"
+                                       else "remove" if reported == FAIL else "confirm, then remove if instructive"),
                         }
                     )
                     break
@@ -210,7 +211,7 @@ def scan_text(path: Path, text: str, long_run: bool) -> list[dict]:
                 "category": "example-heavy",
                 "severity": INFO,
                 "text": f"{len(examples)} example sections",
-                "reason": "Examples constrain the exploration space. Consider expressing the contract as an interface instead.",
+                "reason": "Many examples in one file can narrow output. Keep short task-owned examples that observed runs support; move the rest behind links.",
                 "action": "review",
             }
         )

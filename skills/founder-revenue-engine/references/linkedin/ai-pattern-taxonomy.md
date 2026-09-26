@@ -139,7 +139,7 @@ Comprehensive catalog of AI writing patterns sourced from Wikipedia's "Signs of 
 
 **Detection:** Run `scripts/quality_validator.py` for automated detection. Two or more of these words in same paragraph = strong AI signal.
 
-**Severity:** High. Already covered in `references/negative-style-guide.md`, included here for completeness.
+**Severity:** High.
 
 ---
 
@@ -257,7 +257,7 @@ Comprehensive catalog of AI writing patterns sourced from Wikipedia's "Signs of 
 
 **Detection:** More than 5% of text in bold. Multiple bold phrases in same sentence. Bold used for every proper noun or acronym.
 
-**Severity:** Medium. Already in `references/negative-style-guide.md` formatting anti-patterns.
+**Severity:** Medium.
 
 ---
 
@@ -392,7 +392,7 @@ Comprehensive catalog of AI writing patterns sourced from Wikipedia's "Signs of 
 - "The system has the ability to process" -> "The system can process"
 - "It is important to note that the data shows" -> "The data shows"
 
-**Detection:** Already covered in `references/negative-style-guide.md` Category 7.
+**Detection:** Run `scripts/quality_validator.py`; see the filler rows in `references/linkedin/word-replacement-table.md`.
 
 **Severity:** Medium. Common across all AI output.
 
@@ -458,10 +458,10 @@ Comprehensive catalog of AI writing patterns sourced from Wikipedia's "Signs of 
 
 **Already handled by other skill components:**
 - Em dashes (#13) -> Critical Rule 1
-- Boldface overuse (#14) -> negative-style-guide.md
+- Boldface overuse (#14) -> scan with pattern #14 above (no separate style guide is bundled)
 - Emojis (#17) -> user preferences
-- Filler phrases (#22) -> negative-style-guide.md
-- Excessive hedging (#23) -> divergence-patterns.md
+- Filler phrases (#22) -> `word-replacement-table.md` and `scripts/quality_validator.py`
+- Excessive hedging (#23) -> Hedge Language rules in `quality-enforcement-rules.md`
 
 ---
 

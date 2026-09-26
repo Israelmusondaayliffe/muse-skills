@@ -5,65 +5,96 @@ description: Design, build, and audit reusable agent systems on Hatch. Covers pa
 
 # Agent Ops
 
-Turn "I want an agent that does X" into a working agent system on Hatch, or tell the user when a plain prompt is the right answer. Built on Anthropic's Building Effective Agents: the most successful implementations use simple, composable patterns, not complex frameworks.
+Turn "I want an agent that does X" into a working agent system on Hatch, or tell the user a plain prompt is enough. Built on Anthropic's Building Effective Agents: simple, composable patterns beat frameworks. The finished result is a validated artifact: a design spec or brief that passes `bin/validate_agent.py`, or an audit ledger that passes `bin/validate_audit.py`, with findings tied to evidence.
 
-## Workflow
+## Start here
 
-### 1. Route the request
+1. **Classify the request:**
 
-Classify before building:
+| The request | Mode | Deliverable |
+|---|---|---|
+| A reusable agent, delegation pattern, or recurring workflow | Design | Spec from `assets/agent-spec-template.md`, then briefs |
+| "Review / audit this agent, cron job, or workflow" | Audit (read-only) | Ledger from `assets/audit-template.json` |
+| Both ("audit it, then give me a fixed version") | Audit, then Design | Ledger first, corrected brief as a separate file |
+| A one-off task | None | Do the task directly; do not use this skill |
 
-- **agent-design**: the user wants a reusable agent, a subagent brief pattern, a recurring automated workflow, or delegation architecture.
-- **audit**: the user wants an existing agent setup, cron job, or workflow reviewed for safety and reliability. Read-only unless a repair is separately requested.
+2. **Read what exists:** the instructions, schedule, tools, state, and how completion is checked. For an audit, quote the setup's own words as evidence.
+3. **Check delegation:** is `subagent.spawn` in the current tool list? If not, the design stays the same and the parent runs each brief sequentially in its own thread with the same stops, verification command, and approval pause. Say so in the deliverable.
 
-If the request is a one-off task rather than a reusable system, do not activate this skill. Just do the task.
+## Design: climb the simplicity ladder
 
-### 2. For agent-design: climb the simplicity ladder
+Start at rung 1 and justify every step up. Agentic systems trade latency and cost for task performance; name the trade.
 
-Start at rung 1 and justify every step up. The trade is always explicit: agentic systems buy task performance with latency and cost.
+- **Rung 1, single call:** one well-crafted prompt with retrieved context. Usually enough. If so, say so and stop.
+- **Rung 2, workflow:** predictable, predefined paths. Pick the pattern from `references/patterns.md`: chaining (steps plus a checked gate between them), routing (classifier with a fallback), parallelization (independent passes, never two writers on one file), orchestrator-workers (orchestrator runs named verification, never trusts worker self-reports), evaluator-optimizer (a separate evaluator with explicit criteria and a round cap).
+- **Rung 3, autonomous agent:** open-ended work with unpredictable step counts, checkable success, a feedback loop, and human oversight. Load `references/autonomous-agents.md` (and `references/aci-design.md` for custom tools).
 
-- **Rung 1, single optimized call**: would one well-crafted prompt with retrieved context solve this? Usually yes. If yes, say so and stop.
-- **Rung 2, workflow**: does the task decompose into predictable, predefined paths? Pick the matching pattern from references/patterns.md.
-- **Rung 3, autonomous agent**: only for open-ended problems with unpredictable step counts, checkable success, a feedback loop, and meaningful human oversight.
+Split deterministic work from judgment. A link check, a schema check, or a diff is a script step; deciding a fix is the judgment step, and it gets the approval pause.
 
-Say plainly when the user asks for an agent they do not need. Never deliver a rung-3 design when rung 1 or 2 solves the task.
+Write each worker brief from [assets/subagent-template.md](assets/subagent-template.md): self-contained task, scope, ground-truth command, stop conditions with a numeric cap, pause points, and exactly what to hand back. Children do not inherit the transcript. Then run `python3 bin/validate_agent.py <brief> --kind agent|workflow|subagent` and fix every FAIL before delivering.
 
-### 3. Build by mode
+Output: one line naming the mode, pattern, and why not the simpler rung; each artifact in its own labeled code block with its destination (a `subagent.spawn` brief, a cron instruction block, a skill file path); a sandbox-test note saying how to trial it before trusting it.
 
-**ARCHITECT** (default entry): pattern selection. Load references/patterns.md. Output a filled assets/agent-spec-template.md naming the chosen pattern, the rejected simpler rung with a concrete reason, the trade accepted, ground truth, stops, pause points, and scope. Hand off to WORKFLOW or AGENT.
+## Audit: read-only
 
-**WORKFLOW** (pattern already chosen): load references/patterns.md. Emit pattern artifacts translated to Hatch terms:
+1. Check every control in `references/audit-controls.md`: outcome, evidence, authority, stops, state, tool contracts, recovery, cost, observability, verification.
+2. **Blockers:** missing stop conditions, unbounded external authority (edits, messages, posts, spending without a bound or approval), and completion that cannot be verified independently of the agent's claim.
+3. A control with no evidence in the material is **unknown**; write that in the finding. Never infer a pass.
+4. If observed runtime behavior differs from the written instructions, report both and trust the observed evidence.
+5. Record findings (id, control, severity `blocker|high|medium|low`, evidence, remedy) and run `python3 bin/validate_audit.py <ledger.json>`. Report blockers first. Do not implement fixes unless the user also asked for a corrected version.
 
-- chaining: ordered step prompts plus the programmatic gate between steps (what is checked, what happens on failure). Phase-gated plans with a check command at each gate.
-- routing: classifier prompt with category definitions and an explicit fallback, plus one specialized prompt per category. State what happens on misclassification.
-- parallelization: independent passes as multiple subagent.spawn calls in one turn, or sectioning prompts with an aggregation rule. Never two writers on the same files; boundaries live in the spec.
-- orchestrator-workers: orchestrator brief (decomposition rules, synthesis duties, its own verification step), worker brief template (spec in, scoped output, own stop rules), plus a reviewer brief when warranted. The orchestrator never trusts worker self-reports; it runs named verification commands.
-- evaluator-optimizer: generator prompt, evaluator prompt with explicit criteria, loop rule (max rounds, what "accepted" means), and the fresh-context rule: the evaluator never grades the generator's own work (spawn a separate subagent).
+## Worked example (illustrative)
 
-**AGENT** (true autonomous agent): load references/autonomous-agents.md. If custom tools are involved, load references/aci-design.md. Write the subagent brief with all five loop mechanics: task acquisition, ground truth every step (named commands, never self-report), pause points (before any step where a wrong call poisons downstream work), stop conditions (max iterations or budget, failure stop with report, blocked stop naming what would clear the block), and an iteration policy (how it picks its next action between attempts). Run `python3 bin/validate_agent.py <brief-file> --kind agent` and fix failures before delivering.
+A nightly cron agent is told: "Check every link in ~/workspace/docs and fix any broken ones by editing the Markdown files directly... Keep going until everything works... post 'All links fixed' in the team channel."
 
-**ACI** (tool interface design): load references/aci-design.md. Write each tool definition to the checklist (example usage, edge cases, format requirements, boundaries from neighboring tools) and poka-yoke repeated mistakes by redesigning arguments so the error class becomes structurally impossible.
+Audit judgment: "Keep going until everything works" has no cap, a stops blocker. Direct edits to every doc plus a channel post with no approval is unbounded authority, a blocker. "All links fixed" comes from the agent's own claim, a verification blocker. No state between nights is a medium finding. Cost is unknown.
 
-**REVIEW** (existing setup): load references/patterns.md and references/autonomous-agents.md. Map the setup to its pattern, then check simplicity, transparency, ACI quality, ground truth, stops, pause points, gates, and scope. Report severity-ordered findings mapped to evidence in their artifacts, then corrected artifacts, then one reusable prevention rule.
+Corrected design: rung 2 chaining, not an autonomous agent. Step 1 is a script that lists broken links (deterministic). Step 2 proposes fixes as a list and waits for approval before any edit or post. A brief for step 2 that passes the validator, runnable from this skill folder:
 
-### 4. Output contract
+```bash
+SCRATCH=$(mktemp -d)
+cat > "$SCRATCH/brief.md" <<'EOF'
+You are a docs link fixer. Task: turn the broken-link report into a proposed fix list.
+Ground truth: run python3 check_links.py docs/ and assess from its output, never self-report.
+Stop conditions: stop and report when every broken link has a proposed fix or a reason it has none. Maximum 3 attempts to locate a moved page. If the checker fails after 3 attempts, stop and report the error.
+Pause point: wait for the user to approve the fix list before editing any file or posting anything.
+EOF
+python3 bin/validate_agent.py "$SCRATCH/brief.md" --kind agent
+```
 
-Every build delivers:
+It prints `RESULT: PASS` with an advisory WARN for iteration policy; add one sentence on how the next attempt is chosen to clear it.
 
-1. One line naming the mode, chosen pattern, and why this rung and not the simpler one.
-2. The filled design spec or the brief artifacts, each in its own labeled code block with its destination (e.g. `subagent.spawn` brief, cron instruction block, skill file path).
-3. A sandbox-test note: how to test before trusting it, because errors compound in agentic systems.
+A wrong version would deliver a rung-3 agent, keep "use your best judgment" as the authority rule, or claim the brief validated without running the validator.
 
-### 5. For audit: assess read-only
+## When something goes wrong
 
-Collect the instructions, schedule, tools, state model, and verification contract. Check every control in references/audit-controls.md. Record findings with assets/audit-template.json, run `python3 bin/validate_audit.py <file>`, and report blockers first with evidence and a concrete remedy. Do not implement fixes during an audit-only request. Mark a control unknown when evidence is absent; never infer a pass.
+| Symptom | Likely cause | Next move | Stop and ask when |
+|---|---|---|---|
+| `validate_agent.py` FAIL on stops | No numeric cap or failure stop | Add "Maximum N ..." and "after N attempts, stop and report" | never |
+| FAIL on ground truth | Completion is self-reported | Name the command whose output decides done | no checkable command exists; say the task is not agent-ready |
+| FAIL on em-dashes | Pasted prose | Replace with commas or periods | never |
+| `validate_audit.py` invalid | Missing id, severity, evidence, or remedy | Fill from the setup's text | never |
+| No evidence for a control | Material does not cover it | Mark it unknown in the finding | the user needs a verdict on it; ask for the missing material |
+| `subagent.spawn` unavailable | Host or session limit | Run the brief sequentially in the parent with the same stops | never; the design does not change |
 
-## Operating Rules
+## Completion
 
-1. The subagent brief is the artifact. Children do not inherit the transcript: a brief must be fully self-contained (task, scope, ground truth commands, stops, what to hand back).
-2. Reaching a budget or iteration cap is not completing the objective. Say so in every design and every report.
-3. Fresh-context review is the honest check. A builder grading its own work is not verification.
-4. Do not duplicate injected context (MEMORY.md, AGENTS.md, SOUL.md, standing files) inside briefs or cron instructions; that material loads every turn and duplication compounds cost.
-5. Minimal worker set. Spawning a subagent for work you can complete directly is waste.
-6. Scripts are validators only; the model does the design judgment.
-7. This skill does not cover request routing between existing workspace skills; that belongs to capability-operator.
+- **Design complete:** spec and briefs delivered, each validator run shown passing, delegation fallback stated, sandbox-test note included.
+- **Audit complete:** ledger validates, blockers first, unknown controls named, no changes made to the audited setup.
+- **Not agent-ready:** say which control (usually ground truth or stops) cannot be defined yet and what would make it definable.
+
+## Operating rules
+
+1. The brief is the artifact. It must stand alone: task, scope, ground-truth commands, stops, hand-back.
+2. Reaching a budget or iteration cap is not completing the objective. Say so in every design and report.
+3. A builder grading its own work is not verification; reviewers get fresh context.
+4. Do not copy standing context (MEMORY.md, AGENTS.md, SOUL.md) into briefs or cron instructions; it already loads every turn.
+5. Minimal worker set. Do not spawn a subagent for work you can finish directly.
+6. Scripts validate structure; the design judgment is yours.
+7. Routing requests between existing workspace skills belongs to capability-operator.
+
+## Resources
+
+- `references/patterns.md`, `references/autonomous-agents.md`, `references/aci-design.md` (tool definitions and poka-yoke), `references/audit-controls.md`.
+- `assets/agent-spec-template.md`, `assets/subagent-template.md`, `assets/audit-template.json`.
+- `bin/validate_agent.py`, `bin/validate_audit.py`.

@@ -38,11 +38,13 @@ SHAPES = ["S1", "S2", "S3"]
 
 # SPEC 11.4 defaults. All user-overridable at brief time, by editing run.json.
 DEFAULT_BUDGETS = {
-    "rounds_cap_per_piece": 10,
-    "wave_cap": 4,
-    "wall_clock_hours_per_session": 6,
-    "subagent_cap_per_run": 400,
-    "cost_ceiling": "user-set",
+    "rounds_cap_per_piece": 2,
+    "wave_cap": 1,
+    "wall_clock_hours_per_session": 0.5,
+    "subagent_cap_per_run": 6,
+    "cost_ceiling": 0,
+    "approved": False,
+    "approval_ref": None,
 }
 
 SLUG_RE = re.compile(r"[a-z0-9][a-z0-9-]*")
@@ -109,6 +111,13 @@ def main(argv=None):
     run_dir = root / ".gauntlet" / "runs" / run_id
     sealed_dir = root / ".gauntlet" / "sealed" / run_id
 
+    if (root / ".gauntlet" / "state.json").exists():
+        # gauntlet-loop owns this .gauntlet/ directory. Never mix the editions' state.
+        print("gauntlet-loop state exists at %s; use another --root or the gauntlet-loop skill"
+              % (root / ".gauntlet" / "state.json"), file=sys.stderr)
+        print(json.dumps({"error": "gauntlet-loop-state-present", "root": str(root)}))
+        return 1
+
     if run_dir.exists():
         print("Run directory already exists: %s" % run_dir, file=sys.stderr)
         print(json.dumps({"error": "run-dir-exists", "run_dir": str(run_dir)}))
@@ -130,7 +139,7 @@ def main(argv=None):
         "created": created.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "plan_hash": None,
         "precheck": None,
-        "context_isolation": "clean",
+        "context_isolation": "unknown",
         "budgets": dict(DEFAULT_BUDGETS),
         "current_wave": 1,
         "stop_reason": None,

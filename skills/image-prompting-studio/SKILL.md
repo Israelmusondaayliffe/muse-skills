@@ -1,5 +1,5 @@
 ---
-name: "image_prompting_studio"
+name: image-prompting-studio
 description: "Write image-generation prompts: create, edit, camera studies, storyboards, typography, infographics, series, grids, brand interpretation, and Midjourney prompt syntax. Prepares prompts only; the user generates images in their own tool."
 metadata: { "includeInPrompt": true }
 ---
@@ -9,6 +9,16 @@ metadata: { "includeInPrompt": true }
 ## Purpose
 
 Turn a brief (and any supplied images) into copyable, faithful image-generation prompts the user can run in their own tool — Midjourney, ChatGPT Images, Gemini/Nano Banana, Seedream, Recraft, Ideogram, Luma, or anything else. Also review supplied prompts and rendered results against a brief. This skill prepares prompts only; it never generates images or submits generation jobs.
+
+## Start here
+
+1. **Name the deliverable.** How many prompts, for which model, in which format, and for which images. "Five prompts" means five complete prompts. "One prompt that makes four images" means one prompt, not four. A grid means one prompt for one composite image.
+2. **Open every supplied image and reference before writing.** Note what is visibly there and what role the user gave it (subject, style, palette, layout). If an image cannot be opened, say so and do not describe it from its filename.
+3. **List the locks** in a scratch note: exact copy strings, names, aspect ratio, count, model, parameters, reference roles and priority, anything the user said must stay. Everything else is creative choice.
+4. **Pick one task guide** from the routing table and read it plus `references/prompt-contract.md`. Read a recipe file only when the guide points to it for this brief.
+5. **Write the complete prompts**, then run the completion checklist and any validator that applies. Deliver in the same turn.
+
+Proceed without questions when the brief names a subject and the deliverable. Ask one short question only when the answer changes what the prompts must contain: missing exact copy for a text-led design, a named brand asset the user has not supplied, or a model whose syntax differs in ways that matter. Otherwise choose, state the assumption in one line, and deliver.
 
 ## Workflow
 
@@ -91,6 +101,35 @@ Everyday scenes plus an edit (attach the scene image; name a model or accept bro
 ```text
 Write everyday-scene prompts: making coffee in a small kitchen, reading on a train, browsing a market stall — natural light, ordinary camera feel. Then write an edit prompt for the attached kitchen image moving the scene to a balcony while preserving the person. Prompts only.
 ```
+
+Optional source collections with original wording: `references/libraries/verbatim-prompt-library.md` and `references/libraries/community-examples.md`. Their counts, settings and success claims are unverified examples, not defaults. Adapt their structure; do not copy real-person or brand content into a user's prompt unless the user asked for it.
+
+## Worked example (illustrative)
+
+Request: "Here's my product photo of a green ceramic mug. Give me three prompts for lifestyle shots, 4:5, for ChatGPT Images. The mug must keep its exact glaze and the handle shape. Put the text 'Slow Mornings' on a card beside it."
+
+- Deliverable: three separate prompts, each for one 4:5 image, ChatGPT Images, natural-language format (no format was requested and the brief is a flowing scene).
+- First actions: open the photo and note the glaze (speckled sage, glossy, darker at the rim) and the handle (squared loop). Read `references/tasks/create.md`, the prompt contract, and the OpenAI Images entry in `references/model-profiles.md` (ChatGPT Images).
+- Locks: mug glaze and handle from the attached photo (reference role: product identity, top priority); exact copy "Slow Mornings"; 4:5; count 3.
+- Variation: three different settings and times of day, same product treatment. Each prompt names the attached photo as the product reference, quotes "Slow Mornings" exactly, states the 4:5 frame, and names the one or two unwanted changes that matter here (glaze color shift, handle redesign).
+- Delivered: three code blocks, a one-line note that the prompts are for the user to run in ChatGPT Images, and nothing claiming how the images will look.
+
+A wrong version would write one prompt asking for three images, paraphrase the card text, describe the mug from memory without opening the photo, add a `--ar 4:5` parameter (Midjourney syntax) to a ChatGPT Images prompt, or call an image-generation tool.
+
+## When something goes wrong
+
+| Symptom | Likely cause | Next move | Stop and ask when |
+|---|---|---|---|
+| A referenced guide or recipe file won't open | Path moved | Search this skill folder for the file name; if absent, work from the task guide and prompt contract | never; finish the prompts |
+| A supplied image cannot be opened | Missing or unreadable attachment | Say so; write the prompt from the user's text description only, labeled as such | the image is the only description of the subject |
+| The named model's syntax is unclear or newer than the profile | Profile out of date | Use the profile's dated guidance, write only controls you can support, and say the profile date | the user needs a specific parameter you cannot confirm |
+| Validator reports a count or path mismatch | Prompt set does not match the locks | Fix the prompts, not the validator input | never |
+| The user reviews a rendered result with drift | Prompt under-specified the lock, or model limit | Look at the actual image, name the drift, tighten that lock in one revised prompt | the same drift survives two revisions |
+| The user asks you to generate the images | Outside this skill | Deliver the prompts and say generation runs in their tool | never generate here |
+
+## Completion
+
+Done means the user has the requested number of complete, copyable prompts, each lock preserved exactly, formatted for the named model (or broadly compatible when none was named), with validators passed where they apply and no generation performed. Rendered success is not claimed until the user shares results.
 
 ## Completion checklist (run before every delivery)
 

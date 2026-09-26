@@ -138,7 +138,8 @@ def append_event(run_dir: Path | str, event_type: str, payload: dict[str, Any]) 
 
 
 def _nonempty_string(value: Any) -> bool:
-    return isinstance(value, str) and bool(value.strip())
+    return (isinstance(value, str) and bool(value.strip())
+            and "__REPLACE_ME__" not in value)
 
 
 def validate_contract(contract: dict[str, Any]) -> list[str]:
@@ -151,7 +152,7 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
     else:
         for field in ("title", "outcome"):
             if not _nonempty_string(goal.get(field)):
-                errors.append(f"goal.{field} must be a non-empty string")
+                errors.append(f"goal.{field} must be a non-empty string without __REPLACE_ME__")
     evidence = contract.get("evidence")
     if not isinstance(evidence, dict):
         errors.append("evidence must be an object")
@@ -168,17 +169,17 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
                     continue
                 check_id = check.get("id")
                 if not _nonempty_string(check_id):
-                    errors.append(f"evidence.machine_checks[{index}].id must be a non-empty string")
+                    errors.append(f"evidence.machine_checks[{index}].id must be a non-empty string without __REPLACE_ME__")
                 elif check_id in seen:
                     errors.append(f"duplicate machine check id: {check_id}")
                 else:
                     seen.add(check_id)
                 if not _nonempty_string(check.get("command")):
-                    errors.append(f"evidence.machine_checks[{index}].command must be a non-empty string")
+                    errors.append(f"evidence.machine_checks[{index}].command must be a non-empty string without __REPLACE_ME__")
         if not isinstance(criteria, list):
             errors.append("evidence.judgment_criteria must be an array")
         elif any(not _nonempty_string(item) for item in criteria):
-            errors.append("every judgment criterion must be a non-empty string")
+            errors.append("every judgment criterion must be a non-empty string without __REPLACE_ME__")
     boundaries = contract.get("boundaries")
     if not isinstance(boundaries, dict):
         errors.append("boundaries must be an object")
@@ -200,7 +201,7 @@ def validate_contract(contract: dict[str, Any]) -> list[str]:
     else:
         for field in ("success", "failure", "blocked", "exhausted"):
             if not _nonempty_string(stops.get(field)):
-                errors.append(f"stops.{field} must be a non-empty string")
+                errors.append(f"stops.{field} must be a non-empty string without __REPLACE_ME__")
     return errors
 
 
@@ -247,7 +248,7 @@ def transition_run(
 ) -> dict[str, Any]:
     run_path = Path(run_dir).resolve()
     if not _nonempty_string(reason):
-        raise LoopKitError("transition reason must be a non-empty string")
+        raise LoopKitError("transition reason must be a non-empty string without __REPLACE_ME__")
     if to_status == "completed":
         raise LoopKitError("completed status requires a validated completion receipt")
     with run_lock(run_path):
@@ -300,14 +301,14 @@ def validate_receipt(receipt: dict[str, Any], run_dir: Path | str) -> list[str]:
         errors.append("status is not a receipt status")
     for field in ("action", "outcome", "next_action"):
         if not _nonempty_string(receipt.get(field)):
-            errors.append(f"{field} must be a non-empty string")
+            errors.append(f"{field} must be a non-empty string without __REPLACE_ME__")
     evidence_paths = receipt.get("evidence_paths")
     if not isinstance(evidence_paths, list):
         errors.append("evidence_paths must be an array")
     else:
         for item in evidence_paths:
             if not _nonempty_string(item):
-                errors.append("every evidence path must be a non-empty string")
+                errors.append("every evidence path must be a non-empty string without __REPLACE_ME__")
             elif not resolve_evidence_path(run_path, item).exists():
                 errors.append(f"evidence path does not exist: {item}")
     checks = receipt.get("checks")
@@ -322,7 +323,7 @@ def validate_receipt(receipt: dict[str, Any], run_dir: Path | str) -> list[str]:
                 continue
             check_id = check.get("id")
             if not _nonempty_string(check_id):
-                errors.append(f"checks[{index}].id must be a non-empty string")
+                errors.append(f"checks[{index}].id must be a non-empty string without __REPLACE_ME__")
             elif check_id in seen_ids:
                 errors.append(f"duplicate check id: {check_id}")
             else:
@@ -330,7 +331,7 @@ def validate_receipt(receipt: dict[str, Any], run_dir: Path | str) -> list[str]:
             if not isinstance(check.get("passed"), bool):
                 errors.append(f"checks[{index}].passed must be a boolean")
             if not _nonempty_string(check.get("evidence")):
-                errors.append(f"checks[{index}].evidence must be a non-empty string")
+                errors.append(f"checks[{index}].evidence must be a non-empty string without __REPLACE_ME__")
         if receipt.get("status") == "completed":
             if not required_ids.issubset(seen_ids):
                 errors.append("completed receipt is missing required machine checks")
@@ -348,7 +349,7 @@ def validate_receipt(receipt: dict[str, Any], run_dir: Path | str) -> list[str]:
                 continue
             criterion = judgment.get("criterion")
             if not _nonempty_string(criterion):
-                errors.append(f"judgments[{index}].criterion must be a non-empty string")
+                errors.append(f"judgments[{index}].criterion must be a non-empty string without __REPLACE_ME__")
             elif criterion in seen_criteria:
                 errors.append(f"duplicate judgment criterion: {criterion}")
             else:
@@ -356,7 +357,7 @@ def validate_receipt(receipt: dict[str, Any], run_dir: Path | str) -> list[str]:
             if not isinstance(judgment.get("passed"), bool):
                 errors.append(f"judgments[{index}].passed must be a boolean")
             if not _nonempty_string(judgment.get("evidence")):
-                errors.append(f"judgments[{index}].evidence must be a non-empty string")
+                errors.append(f"judgments[{index}].evidence must be a non-empty string without __REPLACE_ME__")
         if receipt.get("status") == "completed":
             if not set(criteria).issubset(seen_criteria):
                 errors.append("completed receipt is missing required judgment criteria")

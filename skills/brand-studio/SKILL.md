@@ -1,5 +1,5 @@
 ---
-name: "brand_studio"
+name: brand-studio
 description: "Develop brand strategy, briefs, identity systems and brand reviews with current brand context and independent creative judgment. Use when the user asks for branding, positioning, a brand brief, a logo system, identity guidelines, identity boards, or a brand consistency review."
 ---
 
@@ -11,9 +11,11 @@ Produce brand strategy, briefs, identity systems and reviews from the user's cur
 
 ## Start Here
 
-Read `references/brand-context.md` before any phase. Work from current supplied or confirmed material, defaulting to the user's current brand when none is named; an explicitly named alternate brand is a valid target.
+1. Read `references/brand-context.md`, then open every supplied brief, board, image or file. For SVG, HTML or JSON, read the source; for raster images, look at them. List what is confirmed (with its source) and what is missing.
+2. Name the deliverable in one line: which artifact comes back, in what form (prose, JSON, board brief), for which brand. Default to the user's current brand when none is named; an explicitly named alternate brand is a valid target.
+3. Choose **one primary phase** from the table. Do not run all four; each phase completes independently without another phase's document. For a request spanning deliverables, infer the smallest useful scope, deliver those pieces, and name what you left out.
 
-Choose **one primary phase** by the requested deliverable. Do not run all four; a specialist completes independently without requiring another phase's document first. For a request spanning deliverables, agree on the smallest useful scope first.
+A clear request with its material authorizes the work. Do not restart a strategy interview when the brief already settles positioning, and do not ask the user to confirm routine creative choices; label them proposed instead.
 
 | Requested result | Phase | Supporting material |
 |---|---|---|
@@ -65,11 +67,34 @@ A logo concept is a proposed design, not proof of trademark uniqueness. If rende
 
 Deliver the review without silently modifying the assets. The user owns final creative acceptance: record it only on their explicit decision, never infer it from a pass, download or selection.
 
+## Worked example (illustrative)
+
+Request: "Review this event poster against our brief." The brief (synthetic) sets charcoal `#222222` and cream `#F7F1E3` as base colors and brick `#A23B2A` as an accent capped at a quarter of any layout. It forbids script typefaces and sets the tagline "Read slowly." The poster is an SVG.
+
+- Phase: Review. First action: read the SVG source, not a description of it.
+- Evidence seen: a brick rectangle covering about 60% of the canvas, a subtitle set in `Brush Script MT`, the tagline exact, and only the three brief colors.
+- Judgment: two requirement failures. The palette is correct, but the accent proportion is not, which is a rule about proportion, not about color. The script subtitle breaks an explicit must-avoid. Tagline, palette and wordmark pass. Neither failure is a matter of taste.
+- Repairs: shrink the brick field to a band of at most a quarter of the height, and reset the subtitle in the brief's text face. Result `fail`, acceptance `pending`.
+- JSON: copy `assets/brand-review-template.json` to your scratch folder `$OUT` (never into this skill folder) as `review.json`, fill it, then from this skill's directory run `python3 bin/validate_artifact.py "$OUT/review.json" --schema assets/brand-review-schema.json`. Exit 0 means the structure is valid, nothing more.
+
+A wrong version would call the palette wrong because brick dominates, "fix" the file without being asked, mark it accepted, or report a problem the source does not show.
+
+## When something goes wrong
+
+| Symptom | Likely cause | Next move | Stop when |
+|---|---|---|---|
+| No brief or confirmed decisions exist for a review | Missing authority | Give provisional feedback labeled as such; set result `blocked` | the user wants a conformance verdict; ask for the brief |
+| An asset cannot be opened or seen | Unsupported format or missing file | Review what you can; list the untested checks | every mandatory check is untested; report blocked |
+| `validate_artifact.py` exits 1 | Missing field, bad enum, or a pass with open findings | Read the error list, fix the JSON, and re-run once | the fix would require inventing evidence |
+| Strategy is open but an identity was requested | Unsettled positioning | Label a working hypothesis and build on it | the choice would change the brand's promise; ask one question |
+| Rendering requested, no image tool | Host capability | Deliver the board brief or prompt text and say so | never; brand work stays usable without images |
+
 ## Output Contract
 
 - Each phase returns a complete, self-contained result in the requested form.
 - Proposed choices are labeled proposed; confirmed decisions are labeled confirmed with their source; gaps that affect the result are stated.
 - JSON artifacts, when requested, validate against their schema in `assets/`.
+- Finish in one of three states. **Delivered**: the full requested result, with each finding or choice traced to evidence. **Provisional**: delivered, but it rests on an unconfirmed brief or proposed strategy, and the reply says so first. **Blocked**: a named missing input (brief, asset, authority) prevents the result; deliver any independent parts and name the next useful action.
 
 ## Operating Rules
 
