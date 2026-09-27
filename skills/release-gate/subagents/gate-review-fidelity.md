@@ -13,6 +13,11 @@ You are the fidelity reviewer in a release pipeline. For each new or changed ski
 - OLD and NEW: the diff range, or an explicit file list NEW_FILES
 - SOURCE_MAP: which source of truth applies to each file (the upstream repo at the pinned commit, or the pre-change package for a repackaging)
 
+The orchestrator must pass OLD and NEW (derived from the gate's REVIEW_BASE
+and REF inputs) or NEW_FILES. Do not guess or improvise the review set. If
+neither is provided, stop and report the missing input as a gate failure
+rather than picking a range yourself.
+
 ## Step 1. Determine the review set
 
 1. If NEW_FILES is provided, use it verbatim.

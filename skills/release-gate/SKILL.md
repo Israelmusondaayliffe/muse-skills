@@ -23,6 +23,16 @@ User-invoked only. This skill never auto-dispatches.
 - INSTALL_PATH: required in install mode, the installed skill directory
 - TARGET_COMMIT: required in install mode, the repo commit the install must match
 - TRACK_UPSTREAM: true only when this release claims to track pinned upstream sources exactly; otherwise pins are advisory
+- REVIEW_BASE: in repo mode, the ref the review set is diffed against. The
+  review set is the `REVIEW_BASE..REF` range limited to `skills/`. Default:
+  the most recent commit reachable from REF, excluding REF itself, that
+  changed `skills/`: `git log --format=%H -n 1 REF^ -- skills/`. If no such
+  commit exists, use the empty tree (4b825dc642cb6eb9a060e54bf8d69288fbee4904).
+- REVIEW_FILES: explicit file list. When provided, it is the review set and
+  REVIEW_BASE is ignored.
+
+The judgment checks review exactly the review set defined above; never let a
+reviewer improvise it.
 
 Run all five checks in the order below. Collect every failure and report them
 all in the verdict. One exception: a repo-mode tree mismatch in the hashes
@@ -48,16 +58,18 @@ once the pushed tree is not the reviewed tree.
    sources that have moved. Passes only when the tree is clean, the ref is
    fully pushed, and no pin drift contradicts the release's claims.
 
-4. **review-fidelity** (judgment): dispatch `subagents/gate-review-fidelity.md`. A
-   reviewer reads the changed skills against their intent and source material
+4. **review-fidelity** (judgment): dispatch `subagents/gate-review-fidelity.md`
+   with the review set (REVIEW_BASE and REF, or REVIEW_FILES). A reviewer
+   reads exactly that review set against its intent and source material
    and flags meaning drift, invented content, or missing behavior. Passes only
    when nothing in the review contradicts the intended behavior.
 
-5. **review-mechanics** (judgment): dispatch `subagents/gate-review-mechanics.md`. A
-   reviewer checks mechanics: zero em dashes, frontmatter `name` and `description`
-   conventions, invocation rules (router skills explicit-only), and link and
-   path hygiene. Passes only when nothing in the review contradicts the house
-   rules.
+5. **review-mechanics** (judgment): dispatch `subagents/gate-review-mechanics.md`
+   with the review set (REVIEW_BASE and REF, or REVIEW_FILES). A reviewer
+   checks mechanics on exactly that review set: zero em dashes, frontmatter
+   `name` and `description` conventions, invocation rules (router skills
+   explicit-only), and link and path hygiene. Passes only when nothing in
+   the review contradicts the house rules.
 
 The validate check runs the gated repo's own `tools/validate_collection.py`.
 The hashes and drift checks run via this skill's `bin/` scripts
@@ -82,4 +94,6 @@ what failed, with evidence.
 ## Report
 
 Produce the verdict using the template in `references/go-no-go-report.md`.
-Report blockers plainly; never invent evidence.
+Record the exact review set the judgment checks used: the REVIEW_BASE value
+(or REVIEW_FILES list) and the resulting file list. Report blockers plainly;
+never invent evidence.

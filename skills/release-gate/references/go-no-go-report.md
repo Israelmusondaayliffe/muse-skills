@@ -8,6 +8,11 @@
 - Remote tree SHA (hashes, repo mode):
 - Install path (install mode):
 
+## Review set
+
+- REVIEW_BASE (or REVIEW_FILES):
+- Files reviewed:
+
 ## Check results
 
 | Check | Result (pass/fail) | Failures |
