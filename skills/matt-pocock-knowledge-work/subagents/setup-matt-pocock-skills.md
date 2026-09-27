@@ -1,0 +1,12 @@
+---
+name: setup-matt-pocock-skills
+description: "Use when the user wants to configure a repo for the engineering skills before first use: set up its issue tracker, triage label vocabulary, and domain doc layout."
+---
+
+Invocation: user-invoked only
+
+# Setup Matt Pocock's Skills
+
+Trigger: the user wants to configure this repo for the engineering skills. Run once before first use of the other engineering skills.
+
+Procedure: first explore the repo to understand its starting state: git remote -v and .git/config (GitHub or GitLab remote?), AGENTS.md and CLAUDE.md at the root (does an Agent skills section already exist?), CONTEXT.md and CONTEXT-MAP.md, docs/adr/ and src/*/docs/adr/, docs/agents/ (prior output?), .scratch/ (local-markdown tracker convention?), whether the triage skill is installed, and monorepo signals (pnpm-workspace.yaml, workspaces field in package.json, or populated packages/* with its own src/). Then present findings with a recommended answer per section: Section A, the issue tracker, where issues live for this repo (GitHub via gh CLI by default when the remote points at GitHub, GitLab via glab when it points at GitLab, local markdown under .scratch/<feature>/ for solo or remote-less repos, or a freeform description for anything else), recorded in docs/agents/issue-tracker.md; Section B, the triage label vocabulary, skipped entirely if the triage skill isn't installed, otherwise one question on keeping the five canonical labels (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix); Section C, domain docs, defaulting to single-context (root CONTEXT.md plus docs/adr/) written without asking, offering multi-context (root CONTEXT-MAP.md plus per-context CONTEXT.md files) only when monorepo signals were found. Lead each section with the recommended answer so the user can accept it in a word, show them drafts of the Agent skills block and the docs/agents/*.md contents and let them edit before writing, then write: edit CLAUDE.md if it exists, else AGENTS.md if it exists, else ask which to create (never create one when the other exists), update an existing Agent skills block in place rather than duplicating it, and write the docs files from the seed templates in the skill folder (`assets/setup-seeds/domain.md`, `assets/setup-seeds/issue-tracker-github.md`, `assets/setup-seeds/issue-tracker-gitlab.md`, `assets/setup-seeds/issue-tracker-local.md`, `assets/setup-seeds/triage-labels.md`). When done, tell the user the setup is complete and which engineering skills will now read from these files.
